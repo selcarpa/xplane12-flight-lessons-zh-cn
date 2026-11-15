@@ -1,8 +1,5 @@
-# 生成物与本地文件（默认都在 <游戏目录>/.zh_cn_translate/ 下）
-__pycache__/
-*.py[cod]
-data/
-backup/
+# 程序运行时产物：备份 / 日志 / 报告 / 配置（都在程序目录下的 .zh_cn_translate/）
+.zh_cn_translate/
 *.bak
 *.stage
 
@@ -13,3 +10,7 @@ dist/
 .dotnet/
 .nuget/
 *.user
+
+# Python 归档目录的缓存（旧的 Python 实现已删除，保留以防遗留）
+__pycache__/
+*.py[cod]

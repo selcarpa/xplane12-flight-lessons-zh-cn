@@ -53,7 +53,7 @@ public static class ExeWriter
             catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
             {
                 lastError = ex;
-                attempts.Add($"{stage} → {Describe(ex)}");
+                attempts.Add($"{stage} → {ex.Message}");
                 log?.Invoke($"写入尝试失败（{stage}）：{ex.Message}");
                 TryDelete(stage);
             }
@@ -129,12 +129,6 @@ public static class ExeWriter
         return false;
     }
 
-    private static string Describe(Exception ex) => ex switch
-    {
-        UnauthorizedAccessException => "没有权限",
-        IOException => ex.Message,
-        _ => ex.Message,
-    };
 
     private static void TryDelete(string path)
     {

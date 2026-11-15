@@ -27,6 +27,7 @@ public static class Selftest
         TestVerifier();
         TestManifest();
         TestTranslations();
+        TestPaths();
 
         Console.WriteLine();
         if (_failures == 0)
@@ -243,6 +244,27 @@ public static class Selftest
             }
         }
         Check(titles >= 8, $"至少 8 条课程标题（实际 {titles}）");
+    }
+
+    private static void TestPaths()
+    {
+        Console.WriteLine("path_policy（产物固定在程序目录）");
+        string workDir = XpLessonZhCn.Platform.PathPolicy.WorkDir;
+
+        Check(workDir == Path.Combine(AppContext.BaseDirectory, ".zh_cn_translate"),
+            $"工作目录 = 程序目录/.zh_cn_translate（{workDir}）");
+
+        foreach (var (name, path) in new (string, string)[]
+                 {
+                     ("backup", XpLessonZhCn.Platform.PathPolicy.BackupDir),
+                     ("data", XpLessonZhCn.Platform.PathPolicy.DataDir),
+                     ("log", XpLessonZhCn.Platform.PathPolicy.LogFile),
+                     ("settings", XpLessonZhCn.Platform.PathPolicy.SettingsFile),
+                     ("report", XpLessonZhCn.Platform.PathPolicy.ReportFile),
+                 })
+        {
+            Check(path.StartsWith(workDir, StringComparison.Ordinal), $"{name} 位于工作目录内");
+        }
     }
 
     private static int CountPlaceholders(string text)

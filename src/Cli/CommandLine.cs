@@ -29,6 +29,8 @@ public static class CommandLine
         if (args.Length == 0) return null;
 
         ConsoleBridge.Enable();
+        // 命令行输出同时写一份到 .zh_cn_translate/log.txt
+        Console.SetOut(new TeeTextWriter(Console.Out));
 
         string? command = null;
         string? path = null;
@@ -55,7 +57,6 @@ public static class CommandLine
                     command = "check";
                     break;
                 case "--dry-run":
-                case "--report":
                     command = "dry-run";
                     break;
                 case "--apply":
@@ -179,7 +180,8 @@ public static class CommandLine
         Console.WriteLine($"写入权限 : 游戏目录{(analysis.GameDirWritable ? "可写" : "不可写（需要管理员权限）")}，" +
                           $"工作目录{(analysis.WorkDirWritable ? "可写" : "不可写")}，" +
                           $"当前{(Elevation.IsElevated ? "是" : "不是")}管理员");
-        Console.WriteLine($"备份     : {analysis.BackupCount} 份（{analysis.WorkDir}）");
+        Console.WriteLine($"备份     : {analysis.BackupCount} 份（{PathPolicy.BackupDir}）");
+        Console.WriteLine($"日志     : {PathPolicy.LogFile}");
 
         if (analysis.NeedsSecondaryConfirmation)
         {
@@ -279,7 +281,7 @@ public static class CommandLine
     private static int RunListBackups(PatchService service)
     {
         var backups = service.ListBackups();
-        Console.WriteLine($"备份目录 : {PathPolicy.BackupDir(service.GameDir)}");
+        Console.WriteLine($"备份目录 : {PathPolicy.BackupDir}");
         if (backups.Count == 0)
         {
             Console.WriteLine("  （空）——首次打补丁时会自动生成，或用 Steam 验证文件完整性");

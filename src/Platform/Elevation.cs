@@ -32,8 +32,6 @@ public static class Elevation
         }
     }
 
-    /// <summary>能否弹出系统授权窗口以提升权限（只有 Windows 支持自动提权重启）。</summary>
-    public static bool CanRequestElevation => OperatingSystem.IsWindows();
 
     /// <summary>
     /// 以管理员身份重新启动本程序（Windows 会弹 UAC 授权窗口）。

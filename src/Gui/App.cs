@@ -14,6 +14,8 @@ public sealed class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
+        Platform.RunLog.Init();
+
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             desktop.MainWindow = new MainWindow(Cli.CommandLine.StartupGameDir);

@@ -8,12 +8,12 @@ using System.Text.RegularExpressions;
 
 namespace XpLessonZhCn.Platform;
 
-/// <summary>记住上次使用的游戏目录。</summary>
+/// <summary>记住上次使用的游戏目录（存在程序目录的 .zh_cn_translate/settings.json）。</summary>
 public sealed class Settings
 {
     public string? LastGameDir { get; set; }
 
-    private static string FilePath => Path.Combine(PathPolicy.ConfigDir(), "settings.json");
+    private static string FilePath => PathPolicy.SettingsFile;
 
     public static Settings Load()
     {
@@ -40,7 +40,7 @@ public sealed class Settings
     {
         try
         {
-            Directory.CreateDirectory(Path.GetDirectoryName(FilePath)!);
+            PathPolicy.EnsureDir(PathPolicy.WorkDir);
             File.WriteAllText(FilePath, JsonSerializer.Serialize(this, new JsonSerializerOptions { WriteIndented = true }));
         }
         catch (Exception)

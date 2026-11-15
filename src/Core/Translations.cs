@@ -90,11 +90,4 @@ public static class Translations
     public static string Truncate(string value, int max)
         => value.Length <= max ? value : value[..max] + "…";
 
-    /// <summary>英文原文 → 译文；找不到返回 null。</summary>
-    public static Dictionary<string, string> ToMap(IReadOnlyList<Translation> pairs)
-    {
-        var map = new Dictionary<string, string>(StringComparer.Ordinal);
-        foreach (var pair in pairs) map[pair.English] = pair.Chinese;
-        return map;
-    }
 }

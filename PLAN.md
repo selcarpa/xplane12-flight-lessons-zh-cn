@@ -198,9 +198,9 @@ region_end   = index(END_ANCHOR, 从 START_ANCHOR 之后找)
 统一行为：写前校验目标可写、磁盘剩余空间 ≥ exe 大小 ×2；写后重读校验大小与哈希。
 
 ### 6.2 `GameLocator`（自动找游戏）
-**Windows 候选**：命令行参数 → `%XP12_ROOT%` → 注册表 Steam 安装路径 → 解析各 Steam 库的 `libraryfolders.vdf` → 各库下 `steamapps/common/X-Plane 12` → 从当前目录/程序目录向上搜索 → 记住上次路径（`%APPDATA%`）。
+**Windows 候选**：命令行参数 → `%XP12_ROOT%` → 注册表 Steam 安装路径 → 解析各 Steam 库的 `libraryfolders.vdf` → 各库下 `steamapps/common/X-Plane 12` → 从当前目录/程序目录向上搜索 → 记住上次路径（程序目录 `.zh_cn_translate/settings.json`）。
 
-**Linux 候选**：`$XP12_ROOT` → `~/.steam/steam/steamapps/libraryfolders.vdf` → `~/.local/share/Steam/...` → Flatpak `~/.var/app/com.valvesoftware.Steam/.local/share/Steam/...` → Snap `~/snap/steam/common/.local/share/Steam/...` → 各库里 `steamapps/common/X-Plane 12` → 记住上次路径（`$XDG_CONFIG_HOME`），**大小写兜底**：精确找不到时列目录做忽略大小写匹配。
+**Linux 候选**：`$XP12_ROOT` → `~/.steam/steam/steamapps/libraryfolders.vdf` → `~/.local/share/Steam/...` → Flatpak `~/.var/app/com.valvesoftware.Steam/.local/share/Steam/...` → Snap `~/snap/steam/common/.local/share/Steam/...` → 各库里 `steamapps/common/X-Plane 12` → 记住上次路径（同 `.zh_cn_translate/settings.json`），**大小写兜底**：精确找不到时列目录做忽略大小写匹配。
 
 判定「是游戏目录」的依据：目录下存在 `X-Plane.exe`（精确名）。
 
@@ -208,8 +208,8 @@ region_end   = index(END_ANCHOR, 从 START_ANCHOR 之后找)
 Windows：`Process.GetProcessesByName("X-Plane")`。Linux：扫描 `/proc/*/comm`、`/proc/*/exe` 链接名匹配 `X-Plane.exe|wineserver|wine64-preloader|proton`。检测到游戏在跑 → **禁止打补丁**（仍允许检查/预演）。
 
 ### 6.4 `PathPolicy`
-- 工作目录：`<游戏目录>/.zh_cn_translate/`（`data/` + `backup/`），与原工具一致
-- 不可写（Steam 库属 root / 只读挂载）→ 回落 `$XDG_DATA_HOME/xplane12-zh-cn/`（Linux）或 `%LOCALAPPDATA%\xplane12-zh-cn\`（Windows），并在界面显示实际位置
+- 工作目录：**程序目录**下的 `.zh_cn_translate/`（`backup/` + `data/` + `log.txt` + `settings.json`）
+  → 实施时按用户要求从「游戏目录下」改到「程序目录下」（便携、不污染游戏目录）
 - 备份命名：`X-Plane.exe.<sha256前12位>.bak`
 
 ---
@@ -393,7 +393,7 @@ on: tag v* → 自动创建 Release 并附两个产物 + SHA256SUMS
 | 游戏更新导致锚点/文案变化 | 中（长期必然发生） | 补丁失效 | 明确报错 + 版本识别 + 文档化更新锚点流程 |
 | Steam Deck 外置 exFAT 库权限/rename 差异 | 低 | 写入失败 | 回落覆盖写入 + 明确提示 |
 | 双平台行为漂移 | 中 | 结果不一致 | V4 跨平台逐字节比对 + CI 双平台 selftest |
-| 删掉 Python 后失去独立参考实现 | 确定 | 排障变难 | 把金标准哈希写进文档与自检；`--verify` 内置不变量检查 |
+| 删掉 Python 后失去独立参考实现 | 已发生 | 排障变难 | 金标准哈希写进文档与 `--selftest`；`--verify` 内置不变量检查 |
 
 ---
 
@@ -433,7 +433,7 @@ on: tag v* → 自动创建 Release 并附两个产物 + SHA256SUMS
 | 体积 | 30–40 MB | Windows 便携包 **≈53 MB**（exe 39 MB + libSkiaSharp/av_libglesv2/libHarfBuzzSharp 合计 16.7 MB） |
 | 测试 | selftest + 金标准 | ✅ `tests/SmokeTests`（核心自检 + GUI headless 启动）；真 exe 副本端到端验证得到 `36f5b21e…` |
 | 字体 | 检测 + 提示 | ✅ 已实现；实测游戏自带字体 22/22 抽样字形齐全 |
-| Python | 保留参考实现 | ⚠ 已归档到 `python-achieve/`，计划删除 |
+| Python | 保留参考实现 | ✅ 已按用户要求**删除**（结论已并入 AGENT.md） |
 
 新增的关键实现约定：**兼容清单** `compat/known-versions.json` + **未验证版本二次确认** +
 **写入前后双向 sha256 校验**（详见 AGENT.md §2）。

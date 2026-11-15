@@ -37,7 +37,7 @@ public sealed class Analysis
 
     /// <summary>Windows 下当前没有管理员权限且目录不可写 → 需要提权才能打补丁。</summary>
     public bool NeedsElevationGain { get; set; }
-    public string WorkDir { get; set; } = "";
+
     public int BackupCount { get; set; }
     public bool NeedsSecondaryConfirmation { get; set; }
     public string? FatalError { get; set; }
@@ -68,13 +68,11 @@ public enum ApplyStatus
     NothingToDo,
 }
 
-public sealed class ApplyOutcome
+    public sealed class ApplyOutcome
 {
     public ApplyStatus Status { get; set; }
     public string Message { get; set; } = "";
     public EngineResult? Engine { get; set; }
-    public VerifyReport? PostVerify { get; set; }
-    public string? BackupPath { get; set; }
     public string PatchedSha256 { get; set; } = "";
 }
 
@@ -115,22 +113,6 @@ public sealed class PatchService
     public string ExePath { get; }
     public Action<string>? Log { get; set; }
 
-    private string? _workDir;
-
-    /// <summary>工作目录：优先游戏目录下的 .zh_cn_translate，不可写时回落到用户数据目录。</summary>
-    public string WorkDir
-    {
-        get
-        {
-            if (_workDir is null)
-            {
-                string primary = PathPolicy.WorkDir(GameDir);
-                _workDir = PathPolicy.IsWritable(primary) ? primary : PathPolicy.FallbackWorkDir();
-            }
-            return _workDir;
-        }
-    }
-
     private static string TranslationsPath => Path.Combine(AppContext.BaseDirectory, "translations", "zh.tsv");
     private static string ManifestPath => Path.Combine(AppContext.BaseDirectory, "compat", "known-versions.json");
 
@@ -144,7 +126,7 @@ public sealed class PatchService
         {
             GameDir = GameDir,
             ExePath = ExePath,
-            WorkDir = PathPolicy.WorkDir(GameDir),
+
         };
 
         if (!File.Exists(ExePath))
@@ -213,11 +195,11 @@ public sealed class PatchService
 
         analysis.Font = WineFontProbe.Check(GameDir);
 
-        analysis.WorkDir = WorkDir;
-        analysis.WorkDirWritable = PathPolicy.IsWritable(analysis.WorkDir, out string? workDirError);
+        string workDir = PathPolicy.WorkDir;
+        analysis.WorkDirWritable = PathPolicy.IsWritable(workDir, out string? workDirError);
         if (!analysis.WorkDirWritable)
         {
-            Log?.Invoke($"工作目录不可写（{workDirError}）：无法生成备份与报告，打补丁会被拒绝。");
+            Log?.Invoke($"程序目录不可写（{workDirError}）：无法生成备份/报告/日志，打补丁会被拒绝。请把程序放到有写权限的目录。");
         }
 
         analysis.GameDirWritable = PathPolicy.IsWritable(GameDir, out string? gameDirError);
@@ -334,7 +316,7 @@ public sealed class PatchService
                 Status = ApplyStatus.Failed,
                 Message = $"补丁结果未通过结构校验：{preVerify.Summary()}。已中止，未写盘。",
                 Engine = engine,
-                PostVerify = preVerify,
+                
             };
         }
 
@@ -349,11 +331,11 @@ public sealed class PatchService
                 Message = $"补丁结果与兼容清单记录的哈希不一致（得到 {patchedSha}，预期 {known.PatchedSha256}）。" +
                           "已中止，未写盘，请联系维护者。",
                 Engine = engine,
-                PostVerify = preVerify,
+                
             };
         }
 
-        string backupDir = PathPolicy.EnsureDir(Path.Combine(WorkDir, "backup"));
+        string backupDir = PathPolicy.EnsureDir(PathPolicy.BackupDir);
         string backupPath = Path.Combine(backupDir, $"{GameLocator.ExeName}.{originalSha[..12]}.bak");
         if (!File.Exists(backupPath))
         {
@@ -425,8 +407,8 @@ public sealed class PatchService
                 ? $"补丁完成并通过校验（{known.DisplayName}，共写入 {engine.Patched} 条）。"
                 : $"补丁完成并通过结构校验（未验证版本，共写入 {engine.Patched} 条）。",
             Engine = engine,
-            PostVerify = preVerify,
-            BackupPath = backupPath,
+            
+
             PatchedSha256 = writtenSha,
         };
     }
@@ -501,7 +483,7 @@ public sealed class PatchService
     public List<BackupInfo> ListBackups()
     {
         var list = new List<BackupInfo>();
-        string dir = Path.Combine(WorkDir, "backup");
+        string dir = PathPolicy.BackupDir;
         if (!Directory.Exists(dir)) return list;
 
         try
@@ -602,13 +584,12 @@ public sealed class PatchService
         return new RestoreOutcome { Ok = true, Message = $"已还原为原版（{target.Name}）。", RestoredSha256 = writtenSha };
     }
 
-    public string StoreReport(EngineResult engine, string? workDirOverride = null)
+    public string StoreReport(EngineResult engine)
     {
-        string dir = workDirOverride ?? WorkDir;
         try
         {
-            PathPolicy.EnsureDir(Path.Combine(dir, "data"));
-            string path = Path.Combine(dir, "data", "patch_report.tsv");
+            PathPolicy.EnsureDir(PathPolicy.DataDir);
+            string path = PathPolicy.ReportFile;
 
             var builder = new StringBuilder();
             builder.AppendLine("english\toffset\tstatus\tdetail");

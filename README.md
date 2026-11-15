@@ -49,7 +49,7 @@ chmod +x ~/apps/xpzhcn/XPlane12-FlightLessons-zh-CN
 
 | 机制 | 说明 |
 |---|---|
-| 自动备份 | 首次打补丁前把原版 exe 备份到 `<游戏目录>/.zh_cn_translate/backup/` |
+| 自动备份 | 首次打补丁前把原版 exe 备份到 **程序目录**下的 `.zh_cn_translate\backup\` |
 | 只改字符串 | 只替换只读数据段里的 UTF-8 字符串，**长度只减不增**，不足补 `0x00` |
 | 结构不变 | 文件大小、PE 头、文件尾都不变；改动范围校验通过才允许写盘 |
 | 版本校验 | 打补丁前核对 exe 的 sha256 是否在 [兼容清单](compat/known-versions.json) 里 |
@@ -57,6 +57,21 @@ chmod +x ~/apps/xpzhcn/XPlane12-FlightLessons-zh-CN
 | 写完再验 | 写入后重新读取文件核对 sha256，不一致立即用备份还原 |
 | 游戏运行检测 | 检测到 X-Plane 正在运行会拒绝打补丁 |
 | 字体检测 | 检查游戏自带中文字体是否完好；缺失时提示用 Steam 验证完整性（**只提示，不装字体**） |
+
+程序**只在自己身边**写文件，不往游戏目录、也不往用户目录塞东西：
+
+```
+<程序目录>/
+├─ XPlane12-FlightLessons-zh-CN.exe    主程序
+├─ *.dll                               运行库（保持同目录，别单独挪走 exe）
+└─ .zh_cn_translate/                   自动生成
+   ├─ backup/  原版 exe 备份（每份约 87 MB）
+   ├─ data/patch_report.tsv             逐条补丁结果
+   ├─ log.txt                           运行日志（出问题时把这个发出来）
+   └─ settings.json                      记住上次选的游戏目录
+```
+
+所以整个程序可以放心放在 U 盘或任意可写目录里，挪走就等于"清空配置"，但不影响游戏。
 
 ---
 
@@ -107,7 +122,7 @@ Linux 上程序不会自动提权，按弹窗里给出的 `sudo ...` 命令重�
 
 **Q：怎么彻底还原？**
 程序里点「还原原版」；或者 Steam 验证游戏文件完整性；也可以直接用
-`<游戏目录>/.zh_cn_translate/backup/` 里的 `.bak` 覆盖 `X-Plane.exe`。
+**程序目录**下 `.zh_cn_translate\backup\` 里的 `.bak` 覆盖 `X-Plane.exe`。
 
 **Q：课程卡片描述还是英文？**
 课程卡片、评分项等少量界面文字由游戏自己的翻译表渲染，不在本工具改写范围内（见 AGENT.md 的已知遗留）。
@@ -181,7 +196,6 @@ XPlane12-FlightLessons-zh-CN --path "/path/to/X-Plane 12" --check
 ├─ translations/zh.tsv           译文表（构建时嵌入 exe，exe 旁同名文件可覆盖）
 ├─ compat/known-versions.json    兼容清单（sha256 → 版本信息）
 ├─ tests/SmokeTests/             冒烟测试（核心逻辑 + GUI headless）
-├─ python-achieve/               重写前的 Python 实现（已归档，计划删除）
 ├─ PLAN.md                       重写方案与设计决策
 └─ AGENT.md                      维护者须知：已验证事实、设计约束、踩过的坑
 ```

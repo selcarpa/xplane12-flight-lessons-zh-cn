@@ -3,7 +3,7 @@
 这份文件写给后续接手的人（或 AI）：记录**已验证的事实**、**为什么这样设计**、**踩过的坑**，
 避免重复试错。改代码或继续翻译前请先读完。
 
-> 旧版（Python）文档里仍然有效的结论已全部并入本文件；Python 实现归档在 `python-achieve/`。
+> 旧版（Python）实现已删除，其中仍然有效的结论已全部并入本文件。
 
 ---
 
@@ -25,7 +25,7 @@
 | 改动量 | **787 段 / 45,186 字节**（占文件 0.0496%） |
 | 文件结构 | 大小、PE 头 `[:0x400]`、文件尾 `[-0x1000:]` 均不变 |
 
-> 🎯 **金标准**：任何实现（Windows / Linux、Python / C#）在 exe 副本上打完补丁都必须得到
+> 🎯 **金标准**：任何实现（Windows / Linux）在 exe 副本上打完补丁都必须得到
 > `36f5b21e…`。C# 版已实测逐字节一致。
 
 ### 1.2 字体（决定「Wine 下中文会不会变方块」）
@@ -118,7 +118,9 @@ src/
 │  ├─ ProcessProbe.cs    游戏是否在运行（Windows 进程名 / Linux /proc）
 │  ├─ WineFontProbe.cs   自带字体完整性检测（检测+提示，不安装）
 │  ├─ SfntCmap.cs        最小 sfnt/cmap 解析（判断字体有无某字形）
-│  └─ PathPolicy.cs      工作目录 / 配置目录 / 可写性回落
+│  ├─ PathPolicy.cs      工作目录 = **程序目录**/.zh_cn_translate（便携，不写游戏/用户目录）
+│  ├─ RunLog.cs          运行日志 log.txt（GUI 与 CLI 都写）
+│  └─ Elevation.cs       管理员/root 判断 + Windows 提权重启
 ├─ Service/PatchService.cs   Analyze / Apply / DryRun / Verify / Restore / ListBackups
 ├─ Cli/                  CommandLine、Selftest、ConsoleBridge
 └─ Gui/                  App、MainWindow、ConfirmWindow、UiFonts（Avalonia 11.3.x）
@@ -126,6 +128,19 @@ tests/SmokeTests/        核心自检 + GUI headless 启动（CI 跑这个）
 ```
 
 `Cli` 与 `Gui` 共用同一个 `PatchService`，不允许在 GUI 里重复实现补丁逻辑。
+
+### 3.1 运行时产物（全部在程序目录下，便携设计）
+
+```
+<程序目录>/.zh_cn_translate/
+├─ backup/X-Plane.exe.<sha12>.bak   原版备份（还原/校验都用它）
+├─ data/patch_report.tsv            逐条补丁结果
+├─ log.txt                          运行日志（>4MB 时轮转为 log.1.txt）
+└─ settings.json                    上次选择的游戏目录
+```
+
+**不要**把工作目录挪回游戏目录或 `%APPDATA%`：便携是刻意设计——用户删程序文件夹即可清理，
+游戏目录保持干净；同时避免游戏目录只读/被 Steam 校验影响。`PathPolicy.WorkDir` 是唯一入口。
 
 ---
 
@@ -202,9 +217,12 @@ tests/SmokeTests/        核心自检 + GUI headless 启动（CI 跑这个）
 
 ### 本地端到端验证（需要游戏 exe 的副本，**不要动真游戏**）
 
+> 备份与日志落在**程序目录**的 `.zh_cn_translate/`，不在副本目录；验证完删掉程序目录里的
+> `.zh_cn_translate/backup` 即可，别把它提交进仓库。
+
 ```powershell
 # 1) 复制一份 exe 到临时目录，目录里只需要 X-Plane.exe
-# 2) 检查
+# 2) 检查（顺带确认「写入权限」「日志」两行是否符合预期）
 .\dist\win-x64\XPlane12-FlightLessons-zh-CN.exe --check --path "<副本目录>"
 # 3) 预演
 ... --dry-run --path "<副本目录>"

@@ -182,6 +182,12 @@ public sealed class MainWindow : Window
     {
         AppendLog($"X-Plane 12 飞行教学汉化 v{typeof(MainWindow).Assembly.GetName().Version?.ToString(3) ?? "1.0.0"}");
         AppendLog($"运行平台：{(OperatingSystem.IsWindows() ? "Windows" : OperatingSystem.IsLinux() ? "Linux" : "其他")} · 支持 Windows 与 Linux(Wine/Proton)");
+        AppendLog($"程序目录：{AppContext.BaseDirectory}");
+        AppendLog($"备份/日志：{PathPolicy.WorkDir}");
+        if (RunLog.FilePath is null)
+        {
+            AppendLog("提示：程序目录不可写，日志无法落盘（补丁仍可尝试，但备份会失败）。");
+        }
 
         if (!UiFonts.CjkAvailable)
         {
@@ -291,6 +297,16 @@ public sealed class MainWindow : Window
         {
             _versionText.Text = "版本：" + analysis.FatalError;
             _versionText.Foreground = Brushes.Firebrick;
+            UpdateButtons();
+            return;
+        }
+
+        if (!analysis.RegionOk)
+        {
+            _versionText.Text = "版本：" + (string.IsNullOrEmpty(analysis.RegionError) ? "无法定位教学文本" : analysis.RegionError);
+            _versionText.Foreground = Brushes.Firebrick;
+            _statsText.Text = "这个 exe 的教学文本区无法定位，可能是未支持的版本或文件已被修改。";
+            SetStatus("⚠ 无法定位教学文本区，不能打补丁。");
             UpdateButtons();
             return;
         }
@@ -572,14 +588,13 @@ public sealed class MainWindow : Window
         });
     }
 
+    /// <summary>备份固定放在程序目录下的 .zh_cn_translate/backup。</summary>
     private void OpenBackupDir()
     {
-        if (_service is null) return;
-
-        string dir = Path.Combine(_service.WorkDir, "backup");
+        string dir = PathPolicy.BackupDir;
         try
         {
-            if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
+            Directory.CreateDirectory(dir);
 
             if (OperatingSystem.IsWindows())
             {
@@ -649,7 +664,7 @@ public sealed class MainWindow : Window
         _dryRunButton.IsEnabled = ready && analysis!.RegionOk;
         _applyButton.IsEnabled = ready && analysis!.CanPatch;
         _restoreButton.IsEnabled = ready;
-        _backupButton.IsEnabled = _service is not null && !_busy;
+        _backupButton.IsEnabled = !_busy;
     }
 
     private void SetStatus(string text)
@@ -659,6 +674,8 @@ public sealed class MainWindow : Window
 
     private void AppendLog(string line)
     {
+        RunLog.Write(line); // 同时落盘到 .zh_cn_translate/log.txt
+
         void Append()
         {
             string stamp = DateTime.Now.ToString("HH:mm:ss");
