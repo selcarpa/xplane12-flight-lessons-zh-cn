@@ -33,8 +33,8 @@ cd ..
 TARBALL=XPlane12-FlightLessons-zh-CN-linux-x64.tar.gz
 rm -f "$TARBALL"
 tar czf "$TARBALL" -C linux-x64 .
-sha256sum "$TARBALL" > SHA256SUMS.txt
+sha256sum "$TARBALL" > SHA256SUMS-linux-x64.txt
 
 echo
 echo "完成：dist/$TARBALL"
-cat SHA256SUMS.txt
+cat SHA256SUMS-linux-x64.txt

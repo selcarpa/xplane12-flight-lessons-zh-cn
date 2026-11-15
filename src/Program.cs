@@ -9,6 +9,7 @@ internal static class Program
     [STAThread]
     public static int Main(string[] args)
     {
+
         // 日志固定落在 {程序目录}/.zh_cn_translate/log.txt
         RunLog.Init();
 

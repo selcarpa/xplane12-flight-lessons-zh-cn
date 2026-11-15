@@ -200,6 +200,18 @@ tests/SmokeTests/        核心自检 + GUI headless 启动（CI 跑这个）
     只能写工作区，因此对 `%TEMP%`、`F:` 等位置的写失败**不代表**真实用户环境也没有权限；
     测 ACL 场景时把被测目录放在**工作区内**，并用 `icacls <dir> /deny "<user>:(WD)"`
     （不要用 `(OI)(CI)`，会连子目录一起禁掉）。
+11. **单文件版（`-p:IncludeNativeLibrariesForSelfExtract=true`）的限制**：
+    Avalonia 依赖 `libSkiaSharp` / `av_libglesv2` / `libHarfBuzzSharp` 三个原生库，
+    原生库不能从内存加载，所以单文件 exe 启动时**必须先把它们解压到磁盘**。
+    - 解压发生在 **host 启动阶段、`Main` 之前**，所以**不能**在代码里改解压目录
+      （实测：在 `Main` 里 `SetEnvironmentVariable("DOTNET_BUNDLE_EXTRACT_BASE_DIR", ...)` 无效，
+      仍报 `Failed to determine location for extracting embedded files`）；
+    - 默认解压到 `%TEMP%\.net\<app>\<hash>`，要求 `%TEMP%` 可写；受限系统会直接启动失败，
+      这是**宿主层致命错误**，程序没有机会弹友好提示；
+    - 想在单文件版里改解压目录，只能在启动前由**外部**设置 `DOTNET_BUNDLE_EXTRACT_BASE_DIR`；
+    - 因此**默认发布便携目录版**（`IncludeNativeLibrariesForSelfExtract=false`，原生库与 exe 同目录），
+      单文件版作为可选下载，README 里必须写清前提与失败提示。
+    - 校验单文件版是否可用：外部指定可写目录后跑 `--selftest`，应能在该目录看到三个原生库且自检通过。
 
 ---
 

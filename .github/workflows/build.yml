@@ -42,6 +42,22 @@ jobs:
           -p:DebugType=none
           -o dist/${{ matrix.rid }}
 
+      - name: 发布单文件版（仅 Windows）
+        if: runner.os == 'Windows'
+        run: >
+          dotnet publish src/XpLessonZhCN.csproj -c Release -r win-x64
+          --self-contained true
+          -p:PublishSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -p:EnableCompressionInSingleFile=true
+          -p:DebugType=none
+          -o dist/win-x64-single
+
+      - name: 复制单文件产物（仅 Windows）
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: Copy-Item dist/win-x64-single/XPlane12-FlightLessons-zh-CN.exe "dist/${{ matrix.artifact }}-single.exe"
+
       - name: 校验发布产物能启动（Windows）
         if: runner.os == 'Windows'
         shell: pwsh
@@ -77,12 +93,12 @@ jobs:
         shell: bash
         run: |
           cd dist
-          : > SHA256SUMS.txt
-          for f in *.zip *.tar.gz; do
+          : > SHA256SUMS-${{ matrix.rid }}.txt
+          for f in *.zip *.tar.gz *.exe; do
             [ -e "$f" ] || continue
-            if command -v sha256sum >/dev/null; then sha256sum "$f" >> SHA256SUMS.txt; else shasum -a 256 "$f" >> SHA256SUMS.txt; fi
+            if command -v sha256sum >/dev/null; then sha256sum "$f" >> SHA256SUMS-${{ matrix.rid }}.txt; else shasum -a 256 "$f" >> SHA256SUMS-${{ matrix.rid }}.txt; fi
           done
-          cat SHA256SUMS.txt
+          cat SHA256SUMS-${{ matrix.rid }}.txt
 
       - name: 上传产物
         uses: actions/upload-artifact@v4
@@ -91,7 +107,8 @@ jobs:
           path: |
             dist/${{ matrix.artifact }}.zip
             dist/${{ matrix.artifact }}.tar.gz
-            dist/SHA256SUMS.txt
+            dist/${{ matrix.artifact }}-single.exe
+            dist/SHA256SUMS-${{ matrix.rid }}.txt
 
       - name: 发布 Release（打 tag 时）
         if: startsWith(github.ref, 'refs/tags/')
@@ -100,4 +117,5 @@ jobs:
           files: |
             dist/${{ matrix.artifact }}.zip
             dist/${{ matrix.artifact }}.tar.gz
-            dist/SHA256SUMS.txt
+            dist/${{ matrix.artifact }}-single.exe
+            dist/SHA256SUMS-${{ matrix.rid }}.txt

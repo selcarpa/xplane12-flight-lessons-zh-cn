@@ -14,10 +14,23 @@
 
 ### Windows
 
-1. 下载 `XPlane12-FlightLessons-zh-CN-win-x64.zip`，解压到任意目录
+有两种打包形态，**推荐便携版**：
+
+| 下载 | 说明 | 适合 |
+|---|---|---|
+| `...-win-x64.zip`（推荐） | 解压即用：`exe` + 3 个运行库同目录 | 绝大多数人；不需要 `%TEMP%` 可写，杀软误报最少 |
+| `...-win-x64-single.exe` | 单个 exe，双击即用 | 只想拿一个文件的人；首次启动会把运行库解压到 `%TEMP%\.net`，**要求该目录可写** |
+
+**便携版用法**：
+
+1. 下载 `XPlane12-FlightLessons-zh-CN-win-x64.zip`，解压到任意目录（例如 `D:\Tools\XP12汉化`）
 2. **完全退出 X-Plane 12**，双击 `XPlane12-FlightLessons-zh-CN.exe`
 3. 程序会自动找到游戏目录；没找到就点「浏览…」选到游戏根目录（含 `X-Plane.exe` 的那一层）
 4. 点「打补丁」→ 确认 → 看到「补丁完成并通过校验」即可启动游戏
+
+> 单文件版如果启动报 `Failed to determine location for extracting embedded files`，
+> 说明你的 `%TEMP%` 不可写：改用便携版即可（或手动设置环境变量
+> `DOTNET_BUNDLE_EXTRACT_BASE_DIR` 指向一个可写目录后再运行）。
 
 ### Linux（Steam / Proton）
 
