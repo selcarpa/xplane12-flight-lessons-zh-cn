@@ -287,7 +287,39 @@ tests/SmokeTests/        核心自检 + GUI headless 启动（CI 跑这个）
 
 ---
 
-## 10. 禁止事项
+## 10. 发布流程
+
+发布由 GitHub Actions 完成（`.github/workflows/build.yml`），本地不需要上传任何东西：
+
+```bash
+# 1) 确认要发布的内容已经推到 main
+git push origin main
+
+# 2) 打 tag 并推送（tag 即版本号，CI 会用它编译进 exe）
+git tag -a v0.1.0 -m "v0.1.0"
+git push origin v0.1.0
+```
+
+触发后会发生什么：
+
+1. `build` job 在 Windows / Linux 各跑一遍：冒烟测试 → 发布便携版（Linux 为 tar.gz）→ 校验产物能启动 → 上传 artifact；
+   Windows 额外产出单文件版 `-single.exe`。
+2. `release` job 等两个平台都成功后，下载全部 artifact、合并成一份 `SHA256SUMS.txt`，创建 Release 并挂上
+   `zip` / `tar.gz` / `-single.exe` / `SHA256SUMS.txt`。
+3. tag 名里带 `-` 的（如 `v0.1.0-snapshot`）**自动标记为预发布**，不会顶掉“Latest release”。
+
+注意：
+
+- **版本号来源**：`src/XpLessonZhCN.csproj` 的 `<Version>` 是本地默认值；CI 用 tag 覆盖
+  （`-p:Version=${tag#v}`），所以 `--version` 显示的一定是 tag 版本。改版本只需改 tag 或同步改 csproj。
+- **仓库设置**：Settings → Actions → General → Workflow permissions 需要允许
+  **Read and write**，否则 `release` job 拿不到写权限（403）。workflow 里已声明 `contents: write`。
+- 只在打 tag 时发布；推 main、PR、手动触发都只构建不发布。
+- 本地预览发布产物：`./build.ps1`（Windows）、`./build.sh`（Linux），产物在 `dist/`，不会上传。
+
+---
+
+## 11. 禁止事项
 
 - 不要改代码段、不要新增/移动节、不要做字符串重定位。
 - 不要为了「让译文放得下」而覆盖相邻字符串或对齐填充之后的字节。

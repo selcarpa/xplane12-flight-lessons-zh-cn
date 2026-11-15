@@ -7,9 +7,9 @@
     <LangVersion>latest</LangVersion>
     <AssemblyName>XPlane12-FlightLessons-zh-CN</AssemblyName>
     <RootNamespace>XpLessonZhCn</RootNamespace>
-    <Version>1.0.0</Version>
-    <FileVersion>1.0.0.0</FileVersion>
-    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <Version>0.1.0</Version>
+    <FileVersion>0.1.0.0</FileVersion>
+    <AssemblyVersion>0.1.0.0</AssemblyVersion>
     <AssemblyTitle>X-Plane 12 飞行教学汉化</AssemblyTitle>
     <Product>X-Plane 12 飞行教学汉化</Product>
     <Company>selcarpa</Company>

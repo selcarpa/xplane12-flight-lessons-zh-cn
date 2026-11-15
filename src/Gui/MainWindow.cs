@@ -8,6 +8,7 @@ using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
+using XpLessonZhCn.Core;
 using XpLessonZhCn.Platform;
 using XpLessonZhCn.Service;
 
@@ -195,7 +196,7 @@ public sealed class MainWindow : Window
 
     private async Task InitializeAsync(string? startupGameDir)
     {
-        AppendLog($"X-Plane 12 飞行教学汉化 v{typeof(MainWindow).Assembly.GetName().Version?.ToString(3) ?? "1.0.0"}");
+        AppendLog($"X-Plane 12 飞行教学汉化 v{AppVersion.Display}");
         AppendLog($"运行平台：{(OperatingSystem.IsWindows() ? "Windows" : OperatingSystem.IsLinux() ? "Linux" : "其他")} · 支持 Windows 与 Linux(Wine/Proton)");
         AppendLog($"程序目录：{AppContext.BaseDirectory}");
         AppendLog($"备份/日志：{PathPolicy.WorkDir}");

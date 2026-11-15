@@ -312,8 +312,7 @@ public static class CommandLine
 
     private static void PrintVersion()
     {
-        var assembly = typeof(CommandLine).Assembly;
-        string version = assembly.GetName().Version?.ToString(3) ?? "1.0.0";
+        string version = AppVersion.Display;
         Console.WriteLine($"X-Plane 12 飞行教学汉化 v{version}");
         Console.WriteLine("支持平台：Windows / Linux(Wine/Proton)");
     }

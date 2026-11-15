@@ -7,6 +7,10 @@ on:
   pull_request:
   workflow_dispatch:
 
+# 默认只读；发布 Release 的 job 单独申请 contents: write
+permissions:
+  contents: read
+
 jobs:
   build:
     name: ${{ matrix.rid }}
@@ -29,10 +33,18 @@ jobs:
         with:
           dotnet-version: "9.0.x"
 
+      - name: 计算版本号（打 tag 时用 tag，否则用占位版本）
+        shell: bash
+        run: |
+          v="${GITHUB_REF_NAME#v}"
+          if ! [[ "$v" =~ ^[0-9]+\.[0-9]+\.[0-9]+ ]]; then v="0.0.0-ci"; fi
+          echo "APP_VERSION=$v" >> "$GITHUB_ENV"
+          echo "构建版本号：$v"
+
       - name: 冒烟测试（核心逻辑 + GUI headless）
         run: dotnet run --project tests/SmokeTests/SmokeTests.csproj -c Release
 
-      - name: 发布（自包含）
+      - name: 发布便携版（自包含，原生库与 exe 同目录）
         run: >
           dotnet publish src/XpLessonZhCN.csproj -c Release -r ${{ matrix.rid }}
           --self-contained true
@@ -40,6 +52,7 @@ jobs:
           -p:IncludeNativeLibrariesForSelfExtract=false
           -p:EnableCompressionInSingleFile=true
           -p:DebugType=none
+          -p:Version=${{ env.APP_VERSION }}
           -o dist/${{ matrix.rid }}
 
       - name: 发布单文件版（仅 Windows）
@@ -51,6 +64,7 @@ jobs:
           -p:IncludeNativeLibrariesForSelfExtract=true
           -p:EnableCompressionInSingleFile=true
           -p:DebugType=none
+          -p:Version=${{ env.APP_VERSION }}
           -o dist/win-x64-single
 
       - name: 复制单文件产物（仅 Windows）
@@ -94,9 +108,13 @@ jobs:
         run: |
           cd dist
           : > SHA256SUMS-${{ matrix.rid }}.txt
-          for f in *.zip *.tar.gz *.exe; do
-            [ -e "$f" ] || continue
-            if command -v sha256sum >/dev/null; then sha256sum "$f" >> SHA256SUMS-${{ matrix.rid }}.txt; else shasum -a 256 "$f" >> SHA256SUMS-${{ matrix.rid }}.txt; fi
+          for f in *; do
+            case "$f" in
+              *.zip|*.tar.gz|*-single.exe) ;;
+              *) continue ;;
+            esac
+            if command -v sha256sum >/dev/null; then sha256sum "$f" >> SHA256SUMS-${{ matrix.rid }}.txt
+            else shasum -a 256 "$f" >> SHA256SUMS-${{ matrix.rid }}.txt; fi
           done
           cat SHA256SUMS-${{ matrix.rid }}.txt
 
@@ -110,12 +128,59 @@ jobs:
             dist/${{ matrix.artifact }}-single.exe
             dist/SHA256SUMS-${{ matrix.rid }}.txt
 
-      - name: 发布 Release（打 tag 时）
-        if: startsWith(github.ref, 'refs/tags/')
+  # 单独一个 job 汇总两个平台后再发布，避免两个矩阵 job 并发创建同一个 Release
+  release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: 下载两个平台的产物
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: 合并校验和
+        shell: bash
+        run: |
+          cd artifacts
+          ls -l
+          cat SHA256SUMS-*.txt > SHA256SUMS.txt
+          rm -f SHA256SUMS-*.txt
+          echo '--- SHA256SUMS.txt ---'
+          cat SHA256SUMS.txt
+
+      - name: 创建 Release
         uses: softprops/action-gh-release@v2
         with:
+          name: X-Plane 12 飞行教学汉化 ${{ github.ref_name }}
+          # tag 名里带 - 的（如 v0.1.0-snapshot）自动标为预发布
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          body: |
+            X-Plane 12「飞行教学」课程标题 + 口播字幕汉化。
+
+            ## 下载哪个？
+
+            | 平台 | 文件 | 说明 |
+            |---|---|---|
+            | Windows（推荐） | `XPlane12-FlightLessons-zh-CN-win-x64.zip` | 解压即用 |
+            | Windows（只要一个文件） | `XPlane12-FlightLessons-zh-CN-win-x64-single.exe` | 首次启动需 `%TEMP%` 可写 |
+            | Linux（Steam / Proton） | `XPlane12-FlightLessons-zh-CN-linux-x64.tar.gz` | `tar xzf` 后直接运行 |
+
+            用法：**退出游戏 → 运行 → 点「打补丁」→ 看到绿色「补丁完成」**。
+            详细步骤见包里的 `使用说明.md`，或仓库里的 `docs/使用说明.md`。
+
+            ## 校验
+
+            下载后可用 `SHA256SUMS.txt` 核对文件完整性：
+            `sha256sum -c SHA256SUMS.txt`（Windows 可用 `Get-FileHash`）。
+
+            兼容性：X-Plane 12.4.3-r2 (build 124311)。其他版本会提示「未验证版本」并要求二次确认。
           files: |
-            dist/${{ matrix.artifact }}.zip
-            dist/${{ matrix.artifact }}.tar.gz
-            dist/${{ matrix.artifact }}-single.exe
-            dist/SHA256SUMS-${{ matrix.rid }}.txt
+            artifacts/*.zip
+            artifacts/*.tar.gz
+            artifacts/*-single.exe
+            artifacts/SHA256SUMS.txt
