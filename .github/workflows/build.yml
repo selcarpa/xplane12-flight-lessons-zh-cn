@@ -55,22 +55,6 @@ jobs:
           -p:Version=${{ env.APP_VERSION }}
           -o dist/${{ matrix.rid }}
 
-      - name: 发布单文件版（仅 Windows）
-        if: runner.os == 'Windows'
-        run: >
-          dotnet publish src/XpLessonZhCN.csproj -c Release -r win-x64
-          --self-contained true
-          -p:PublishSingleFile=true
-          -p:IncludeNativeLibrariesForSelfExtract=true
-          -p:EnableCompressionInSingleFile=true
-          -p:DebugType=none
-          -p:Version=${{ env.APP_VERSION }}
-          -o dist/win-x64-single
-
-      - name: 复制单文件产物（仅 Windows）
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: Copy-Item dist/win-x64-single/XPlane12-FlightLessons-zh-CN.exe "dist/${{ matrix.artifact }}-single.exe"
 
       - name: 校验发布产物能启动（Windows）
         if: runner.os == 'Windows'
@@ -110,7 +94,7 @@ jobs:
           : > SHA256SUMS-${{ matrix.rid }}.txt
           for f in *; do
             case "$f" in
-              *.zip|*.tar.gz|*-single.exe) ;;
+              *.zip|*.tar.gz) ;;
               *) continue ;;
             esac
             if command -v sha256sum >/dev/null; then sha256sum "$f" >> SHA256SUMS-${{ matrix.rid }}.txt
@@ -125,7 +109,7 @@ jobs:
           path: |
             dist/${{ matrix.artifact }}.zip
             dist/${{ matrix.artifact }}.tar.gz
-            dist/${{ matrix.artifact }}-single.exe
+
             dist/SHA256SUMS-${{ matrix.rid }}.txt
 
   # 单独一个 job 汇总两个平台后再发布，避免两个矩阵 job 并发创建同一个 Release
@@ -167,7 +151,7 @@ jobs:
             | 平台 | 文件 | 说明 |
             |---|---|---|
             | Windows（推荐） | `XPlane12-FlightLessons-zh-CN-win-x64.zip` | 解压即用 |
-            | Windows（只要一个文件） | `XPlane12-FlightLessons-zh-CN-win-x64-single.exe` | 首次启动需 `%TEMP%` 可写 |
+
             | Linux（Steam / Proton） | `XPlane12-FlightLessons-zh-CN-linux-x64.tar.gz` | `tar xzf` 后直接运行 |
 
             用法：**退出游戏 → 运行 → 点「打补丁」→ 看到绿色「补丁完成」**。
@@ -182,5 +166,5 @@ jobs:
           files: |
             artifacts/*.zip
             artifacts/*.tar.gz
-            artifacts/*-single.exe
+
             artifacts/SHA256SUMS.txt

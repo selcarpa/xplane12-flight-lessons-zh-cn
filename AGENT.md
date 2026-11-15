@@ -198,18 +198,14 @@ tests/SmokeTests/        核心自检 + GUI headless 启动（CI 跑这个）
     只能写工作区，因此对 `%TEMP%`、`F:` 等位置的写失败**不代表**真实用户环境也没有权限；
     测 ACL 场景时把被测目录放在**工作区内**，并用 `icacls <dir> /deny "<user>:(WD)"`
     （不要用 `(OI)(CI)`，会连子目录一起禁掉）。
-11. **单文件版（`-p:IncludeNativeLibrariesForSelfExtract=true`）的限制**：
-    Avalonia 依赖 `libSkiaSharp` / `av_libglesv2` / `libHarfBuzzSharp` 三个原生库，
-    原生库不能从内存加载，所以单文件 exe 启动时**必须先把它们解压到磁盘**。
-    - 解压发生在 **host 启动阶段、`Main` 之前**，所以**不能**在代码里改解压目录
-      （实测：在 `Main` 里 `SetEnvironmentVariable("DOTNET_BUNDLE_EXTRACT_BASE_DIR", ...)` 无效，
-      仍报 `Failed to determine location for extracting embedded files`）；
-    - 默认解压到 `%TEMP%\.net\<app>\<hash>`，要求 `%TEMP%` 可写；受限系统会直接启动失败，
-      这是**宿主层致命错误**，程序没有机会弹友好提示；
-    - 想在单文件版里改解压目录，只能在启动前由**外部**设置 `DOTNET_BUNDLE_EXTRACT_BASE_DIR`；
-    - 因此**默认发布便携目录版**（`IncludeNativeLibrariesForSelfExtract=false`，原生库与 exe 同目录），
-      单文件版作为可选下载，README 里必须写清前提与失败提示。
-    - 校验单文件版是否可用：外部指定可写目录后跑 `--selftest`，应能在该目录看到三个原生库且自检通过。
+11. **不要做单文件 exe（已决定不提供该产物）**：Avalonia 依赖 `libSkiaSharp` / `av_libglesv2` /
+    `libHarfBuzzSharp` 三个原生库，原生库不能从内存加载，`-p:IncludeNativeLibrariesForSelfExtract=true`
+    时宿主会在 **`Main` 之前**把它们解压到 `%TEMP%\.net\<app>\<hash>`：
+    - 解压目录**无法在代码里改**（实测 `Main` 里设 `DOTNET_BUNDLE_EXTRACT_BASE_DIR` 无效）；
+    - `%TEMP%` 不可写时是**宿主层致命错误**，拿不到机会弹友好提示（`Failed to determine location
+      for extracting embedded files`，错误码 5）。
+    所以固定发布**便携目录版**（`IncludeNativeLibrariesForSelfExtract=false`，3 个原生库与 exe 同目录，
+    再打 zip），不要重新引入单文件变体。
 
 ---
 
@@ -302,10 +298,9 @@ git push origin v0.1.0
 
 触发后会发生什么：
 
-1. `build` job 在 Windows / Linux 各跑一遍：冒烟测试 → 发布便携版（Linux 为 tar.gz）→ 校验产物能启动 → 上传 artifact；
-   Windows 额外产出单文件版 `-single.exe`。
+1. `build` job 在 Windows / Linux 各跑一遍：冒烟测试 → 发布便携版（Windows 为 zip、Linux 为 tar.gz）→ 校验产物能启动 → 上传 artifact。
 2. `release` job 等两个平台都成功后，下载全部 artifact、合并成一份 `SHA256SUMS.txt`，创建 Release 并挂上
-   `zip` / `tar.gz` / `-single.exe` / `SHA256SUMS.txt`。
+   `zip` / `tar.gz` / `SHA256SUMS.txt`。
 3. tag 名里带 `-` 的（如 `v0.1.0-snapshot`）**自动标记为预发布**，不会顶掉“Latest release”。
 
 注意：

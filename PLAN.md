@@ -85,7 +85,7 @@ X-Plane.exe 内部字符串引用：NotoSansCJK-SC-Regular ×1、Resources/fonts
 | 维度 | 说明 |
 |---|---|
 | 单代码库 | 同一份 XAML/代码出 Windows + Linux 窗口 |
-| 零安装 | 自包含单文件，Windows/Linux 都不需要预装运行时 |
+| 零安装 | 自包含发布（便携目录/压缩包），Windows/Linux 都不需要预装运行时 |
 | 交叉编译 | `dotnet publish -r linux-x64` 在 Windows 上即可产出 Linux 产物 |
 | 中文 | 内嵌字子集，双平台渲染一致，不依赖系统字体 |
 | 体积 | 预计 Windows/Linux 各 **30–40 MB**（自包含，不裁剪；trim 实测后再定） |
@@ -114,7 +114,7 @@ X-Plane.exe 内部字符串引用：NotoSansCJK-SC-Regular ×1、Resources/fonts
 ```
 xplane12-flight-lessons-zh-cn/
 ├─ src/
-│  ├─ XpLessonZhCN.csproj          net9.0，Avalonia，单文件自包含，双 RID
+│  ├─ XpLessonZhCN.csproj          net9.0，Avalonia，自包含便携发布，双 RID
 │  ├─ Program.cs                   入口：无参→GUI；带参→CLI
 │  ├─ Core/                        ★ 平台无关，纯字节逻辑
 │  │  ├─ IBinaryImage.cs           「待补丁目标」抽象（当前仅 PE，预留 ELF）
@@ -425,7 +425,7 @@ on: tag v* → 自动创建 Release 并附两个产物 + SHA256SUMS
 |---|---|---|
 | 技术栈 | .NET 9 + Avalonia | ✅ .NET 9 + **Avalonia 11.3.23**（未用 12.x，避开破坏性变更） |
 | 构建 | 优先本地，否则 Actions | ✅ 本地构建成功（放开权限后 NuGet 可用）；CI 仍作为双平台权威构建，见 `.github/workflows/build.yml` |
-| Windows 交付 | 单文件 exe | ⚠ **改为便携目录 + zip**：单文件 + 原生库自解压要求启动时写 `%TEMP%\.net`，受限系统直接失败且易被误判；现为 `exe + 3 个原生 dll` 后打 zip |
+| Windows 交付 | 单文件 exe | ⚠ **改为便携目录 + zip**：单文件 + 原生库自解压要求启动时写 `%TEMP%\.net`，受限系统直接失败且易被误判；现为 `exe + 3 个原生 dll` 后打 zip（**单文件变体已移除，不再提供**） |
 | Linux 交付 | tar.gz | ✅ tar.gz（含可执行位 0755） |
 | 体积 | 30–40 MB | Windows 便携包 **≈53 MB**（exe 39 MB + libSkiaSharp/av_libglesv2/libHarfBuzzSharp 合计 16.7 MB） |
 | 测试 | selftest + 金标准 | ✅ `tests/SmokeTests`（核心自检 + GUI headless 启动）；真 exe 副本端到端验证得到 `36f5b21e…` |
