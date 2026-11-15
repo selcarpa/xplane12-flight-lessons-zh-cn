@@ -77,6 +77,8 @@ jobs:
         shell: pwsh
         run: |
           Copy-Item docs/使用说明.md dist/${{ matrix.rid }}/使用说明.md
+          # 空文件，提醒先解压再运行（压缩包内直接双击 exe 会失败）
+          [System.IO.File]::WriteAllBytes("dist/${{ matrix.rid }}/[解压后再运行]", @())
           Compress-Archive -Path "dist/${{ matrix.rid }}/*" -DestinationPath "dist/${{ matrix.artifact }}.zip"
 
       - name: 打包（Linux）

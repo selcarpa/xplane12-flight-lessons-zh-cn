@@ -33,6 +33,8 @@ if ($LASTEXITCODE -ne 0) { throw '发布失败' }
 
 Write-Host '=== 4/4 打包 ==='
 Copy-Item docs/使用说明.md dist/win-x64/使用说明.md -Force
+# 放一个空文件提醒用户先解压（不要直接在压缩包里双击运行）
+[System.IO.File]::WriteAllBytes((Join-Path 'dist/win-x64' '[解压后再运行]'), @())
 $zip = 'dist/XPlane12-FlightLessons-zh-CN-win-x64.zip'
 Remove-Item $zip -ErrorAction SilentlyContinue
 Compress-Archive -Path 'dist/win-x64/*' -DestinationPath $zip
