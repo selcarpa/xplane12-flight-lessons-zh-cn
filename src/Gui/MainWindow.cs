@@ -321,6 +321,10 @@ public sealed class MainWindow : Window
         {
             SetStatus("当前 exe 已经打好补丁。如需重打，请先「还原原版」。");
         }
+        else if (analysis.NeedsElevationGain)
+        {
+            SetStatus("⚠ 当前账户没有写入游戏目录的权限：打补丁时会先说明原因，再询问是否以管理员身份重启。");
+        }
         else if (analysis.NeedsSecondaryConfirmation)
         {
             SetStatus("这个版本未经验证，打补丁前需要二次确认（弹窗中勾选确认）。");
@@ -331,6 +335,60 @@ public sealed class MainWindow : Window
         }
 
         UpdateButtons();
+    }
+
+    /// <summary>
+    /// 权限不足：先把原因和做法讲清楚，再（经用户同意后）请求系统权限。
+    /// Windows 走 UAC 提权重启；Linux 只给 sudo 提示，不自动提权。
+    /// </summary>
+    private async Task OfferElevationAsync(Analysis analysis, string reason)
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            string hint = Elevation.ManualHint(analysis.GameDir, Environment.ProcessPath);
+            AppendLog("没有写入权限。手动提权方式：");
+            AppendLog("  " + hint.Replace("\n", "\n  "));
+
+            await ConfirmWindow.ShowInfoAsync(this, "需要写入权限",
+                reason + "\n\n" + hint + "\n\n（本工具不会自动提权，也不会修改系统权限设置）");
+            return;
+        }
+
+        if (Elevation.IsElevated)
+        {
+            await ConfirmWindow.ShowInfoAsync(this, "仍然无法写入",
+                reason + "\n\n当前已经是管理员权限，但仍然写不进去。可能原因：\n" +
+                "• 文件被占用（X-Plane 或安全软件正在使用该文件）\n" +
+                "• 磁盘只读 / 文件夹被安全软件保护\n\n" +
+                "建议：Steam → 右键 X-Plane 12 → 属性 → 已安装文件 → 验证游戏文件完整性，然后再试。");
+            return;
+        }
+
+        string message =
+            reason + "\n\n" +
+            $"游戏目录：\n{analysis.GameDir}\n\n" +
+            "解决办法：以管理员身份重新启动本工具。\n" +
+            "点「以管理员身份重启」后，Windows 会弹出 UAC 授权窗口（需要你点「是」）；\n" +
+            "授权后程序会自动带着当前游戏目录重开，届时再点一次「打补丁」即可。\n\n" +
+            "是否现在请求管理员权限并重启？";
+
+        bool ok = await ConfirmWindow.ShowAsync(
+            this, "需要管理员权限", message,
+            checkText: null,
+            okText: "以管理员身份重启",
+            cancelText: "取消");
+
+        if (!ok) return;
+
+        if (Elevation.TryRestartAsAdministrator(analysis.GameDir, out string error))
+        {
+            AppendLog("已请求管理员权限，正在以管理员身份重新启动…");
+            Close();
+            return;
+        }
+
+        await ConfirmWindow.ShowInfoAsync(this, "无法以管理员身份启动",
+            error + "\n\n可以手动操作：右键本程序 → 「以管理员身份运行」。");
     }
 
     private async Task DryRunAsync()
@@ -380,6 +438,13 @@ public sealed class MainWindow : Window
         {
             await ConfirmWindow.ShowInfoAsync(this, "已经是补丁后的状态",
                 "当前 exe 已经打好补丁。如需重新打，请先点「还原原版」。");
+            return;
+        }
+
+        // 权限不足时先解释、再请求提权，不要闷头失败
+        if (analysis.NeedsElevationGain)
+        {
+            await OfferElevationAsync(analysis, "打补丁需要替换游戏目录里的 X-Plane.exe，但当前账户对该目录没有写权限。");
             return;
         }
 
@@ -439,6 +504,11 @@ public sealed class MainWindow : Window
                     SetStatus("需要二次确认后才能继续。");
                     break;
 
+                case ApplyStatus.NeedsPermission:
+                    SetStatus("⚠ 没有写入权限。");
+                    await OfferElevationAsync(analysis, outcome.Message);
+                    break;
+
                 case ApplyStatus.AlreadyPatched:
                     SetStatus("当前 exe 已经是补丁后的状态。");
                     break;
@@ -481,8 +551,20 @@ public sealed class MainWindow : Window
         {
             var outcome = await Task.Run(() => _service.Restore(latest.Name));
             AppendLog(outcome.Message);
-            SetStatus(outcome.Ok ? "已还原为原版。" : "⚠ 还原失败：" + outcome.Message);
-            if (!outcome.Ok) await ConfirmWindow.ShowInfoAsync(this, "还原失败", outcome.Message);
+
+            if (!outcome.Ok && outcome.Message.Contains("权限", StringComparison.Ordinal))
+            {
+                SetStatus("⚠ 没有写入权限，无法还原。");
+                if (_analysis is not null)
+                {
+                    await OfferElevationAsync(_analysis, outcome.Message);
+                }
+            }
+            else
+            {
+                SetStatus(outcome.Ok ? "已还原为原版。" : "⚠ 还原失败：" + outcome.Message);
+                if (!outcome.Ok) await ConfirmWindow.ShowInfoAsync(this, "还原失败", outcome.Message);
+            }
 
             var fresh = await Task.Run(() => _service.Analyze());
             _analysis = fresh;

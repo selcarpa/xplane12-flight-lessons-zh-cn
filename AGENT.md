@@ -145,6 +145,17 @@ tests/SmokeTests/        核心自检 + GUI headless 启动（CI 跑这个）
 7. **Windows 替换 exe 要「先写上一级目录再 rename」**：开发沙箱给工作目录打了
    `Mandatory Label\Low`，直接新建文件会继承该标签，游戏随后以低权限运行、**无法存档**。
    排查：`icacls "X-Plane.exe" | findstr Mandatory`，正常应无输出。
+   **候选顺序**（见 `Platform/ExeWriter.cs`）：上一级目录 → **游戏目录本身** → 系统临时目录。
+   早期版本漏了「游戏目录本身」，导致「上一级不可写但游戏目录可写」的环境直接报
+   `Access to the path '...\X-Plane.exe.stage' is denied`（备份能写成、exe 替换失败）。
+   上一级不可写时仍应能落在游戏目录（同卷、rename 原子）。
+8. **某些目录带显式 `Everyone:(CI)(DENY)(DC)`（禁止删除子项）**：原子替换可能被拒，
+   `ExeWriter.Replace` 会退化为 `File.Copy(overwrite)` 直接覆盖内容，覆盖后仍照常做哈希校验。
+9. **权限不足要能提权**：`Platform/Elevation.cs` 判断 `Environment.IsPrivilegedProcess`，
+   Windows 用 `ShellExecute(..., Verb="runas")` 以管理员身份重启并带上 `--path`；
+   Linux 只给 `sudo` 文案，不自动提权。GUI 在提权前必须**先弹窗说明原因与后果**
+   （`MainWindow.OfferElevationAsync`）；CLI 返回退出码 **4**。
+   注意：提权后是新进程，原进程要 `Close()`；游戏目录要跟着传过去，否则用户还得重选。
 8. **`patch_one` 的 `stop` 必须在写入前算**：中文比英文长时，写入后再扫 0 会把区间算短，
    导致结构校验误报「越界」。
 9. **译文表格式**：只认 `#` 注释与 `英文<TAB>中文`；译文里不能有制表符/换行。
@@ -170,6 +181,10 @@ tests/SmokeTests/        核心自检 + GUI headless 启动（CI 跑这个）
    要瘦身需实测后再决定。
 9. **GUI 在无桌面会话里不要用 `Start-Process` 冒烟测试**：进程树把脚本一起挂住。
    用 `tests/SmokeTests` 的 Avalonia headless 验证。
+10. **在本仓库的 agent 沙箱里测「权限失败」要小心**：agent 启动的子进程受文件沙箱限制，
+    只能写工作区，因此对 `%TEMP%`、`F:` 等位置的写失败**不代表**真实用户环境也没有权限；
+    测 ACL 场景时把被测目录放在**工作区内**，并用 `icacls <dir> /deny "<user>:(WD)"`
+    （不要用 `(OI)(CI)`，会连子目录一起禁掉）。
 
 ---
 

@@ -18,6 +18,8 @@ public static class CommandLine
     public const int ExitRecoverable = 1;
     public const int ExitVerifyFailed = 2;
     public const int ExitEnvironment = 3;
+    /// <summary>没有写入权限，需要以管理员身份重新运行。</summary>
+    public const int ExitPermission = 4;
 
     /// <summary>GUI 启动时通过 --path 传入的游戏目录。</summary>
     public static string? StartupGameDir { get; private set; }
@@ -174,6 +176,9 @@ public static class CommandLine
             Console.WriteLine("           修复：Steam → 右键 X-Plane 12 → 属性 → 已安装文件 → 验证游戏文件完整性");
         }
         Console.WriteLine($"游戏运行 : {(analysis.GameRunning ? "是（" + analysis.GameRunningDetail + "）" : "否")}");
+        Console.WriteLine($"写入权限 : 游戏目录{(analysis.GameDirWritable ? "可写" : "不可写（需要管理员权限）")}，" +
+                          $"工作目录{(analysis.WorkDirWritable ? "可写" : "不可写")}，" +
+                          $"当前{(Elevation.IsElevated ? "是" : "不是")}管理员");
         Console.WriteLine($"备份     : {analysis.BackupCount} 份（{analysis.WorkDir}）");
 
         if (analysis.NeedsSecondaryConfirmation)
@@ -225,6 +230,11 @@ public static class CommandLine
                 Console.Error.WriteLine("请确认后加 --force 重新执行。");
                 return ExitRecoverable;
 
+            case ApplyStatus.NeedsPermission:
+                Console.Error.WriteLine();
+                Console.Error.WriteLine(Elevation.ManualHint(service.GameDir, Environment.ProcessPath));
+                return ExitPermission;
+
             case ApplyStatus.NothingToDo:
                 if (outcome.Engine is not null) service.StoreReport(outcome.Engine);
                 return ExitOk;
@@ -250,8 +260,20 @@ public static class CommandLine
     {
         var outcome = service.Restore(backupName);
         Console.WriteLine(outcome.Message);
-        if (outcome.Ok) Console.WriteLine($"sha256   : {outcome.RestoredSha256}");
-        return outcome.Ok ? ExitOk : ExitRecoverable;
+        if (outcome.Ok)
+        {
+            Console.WriteLine($"sha256   : {outcome.RestoredSha256}");
+            return ExitOk;
+        }
+
+        if (outcome.Message.Contains("权限", StringComparison.Ordinal))
+        {
+            Console.WriteLine();
+            Console.WriteLine(Elevation.ManualHint(service.GameDir, Environment.ProcessPath));
+            return ExitPermission;
+        }
+
+        return ExitRecoverable;
     }
 
     private static int RunListBackups(PatchService service)
@@ -313,6 +335,6 @@ public static class CommandLine
         Console.WriteLine("  --font-check [--path 目录] 检测游戏自带中文字体");
         Console.WriteLine("  --version / --help");
         Console.WriteLine();
-        Console.WriteLine("退出码：0 成功 / 1 可恢复失败 / 2 校验失败 / 3 参数或环境错误");
+        Console.WriteLine("退出码：0 成功 / 1 可恢复失败 / 2 校验失败 / 3 参数或环境错误 / 4 需要管理员权限");
     }
 }

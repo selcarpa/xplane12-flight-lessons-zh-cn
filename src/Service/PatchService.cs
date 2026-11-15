@@ -31,6 +31,12 @@ public sealed class Analysis
     public string GameRunningDetail { get; set; } = "";
     public FontProbeResult Font { get; set; } = new();
     public bool WorkDirWritable { get; set; }
+
+    /// <summary>游戏目录（也就是 exe 所在目录）是否可写。</summary>
+    public bool GameDirWritable { get; set; }
+
+    /// <summary>Windows 下当前没有管理员权限且目录不可写 → 需要提权才能打补丁。</summary>
+    public bool NeedsElevationGain { get; set; }
     public string WorkDir { get; set; } = "";
     public int BackupCount { get; set; }
     public bool NeedsSecondaryConfirmation { get; set; }
@@ -56,6 +62,8 @@ public enum ApplyStatus
     AlreadyPatched,
     NeedsSecondaryConfirmation,
     RefusedGameRunning,
+    /// <summary>没有写入权限，需要以管理员身份运行。</summary>
+    NeedsPermission,
     Failed,
     NothingToDo,
 }
@@ -212,6 +220,15 @@ public sealed class PatchService
             Log?.Invoke($"工作目录不可写（{workDirError}）：无法生成备份与报告，打补丁会被拒绝。");
         }
 
+        analysis.GameDirWritable = PathPolicy.IsWritable(GameDir, out string? gameDirError);
+        if (!analysis.GameDirWritable)
+        {
+            Log?.Invoke($"游戏目录不可写（{gameDirError}）：需要以管理员身份运行才能替换 X-Plane.exe。");
+        }
+
+        analysis.NeedsElevationGain = !Elevation.IsElevated &&
+                                      (!analysis.GameDirWritable || !analysis.WorkDirWritable);
+
         analysis.BackupCount = ListBackups().Count;
         return analysis;
     }
@@ -224,6 +241,17 @@ public sealed class PatchService
             {
                 Status = ApplyStatus.RefusedGameRunning,
                 Message = $"X-Plane 12 正在运行（{runningDetail}），请先退出游戏再打补丁。",
+            };
+        }
+
+        // 先探权限，避免白忙一场（也能在弹窗里提前告诉用户需要提权）
+        if (!PathPolicy.IsWritable(GameDir, out string? writeError))
+        {
+            return new ApplyOutcome
+            {
+                Status = ApplyStatus.NeedsPermission,
+                Message = $"没有写入游戏目录的权限：\n{GameDir}\n（{writeError}）\n\n" +
+                          "需要以管理员身份运行本工具，才能替换 X-Plane.exe。",
             };
         }
 
@@ -336,10 +364,14 @@ public sealed class PatchService
             }
             catch (Exception ex)
             {
+                bool permission = ExeWriter.IsAccessDenied(ex);
                 return new ApplyOutcome
                 {
-                    Status = ApplyStatus.Failed,
-                    Message = $"备份原版 exe 失败，已中止（未改动游戏）：{ex.Message}",
+                    Status = permission ? ApplyStatus.NeedsPermission : ApplyStatus.Failed,
+                    Message = permission
+                        ? $"没有权限写入备份文件：\n{backupPath}\n（{ex.Message}）\n\n" +
+                          "需要以管理员身份运行本工具，才能备份并替换 X-Plane.exe。"
+                        : $"备份原版 exe 失败，已中止（未改动游戏）：{ex.Message}",
                     Engine = engine,
                 };
             }
@@ -352,6 +384,16 @@ public sealed class PatchService
         try
         {
             ExeWriter.WriteAtomically(ExePath, blob, Log);
+        }
+        catch (ExeWriteException ex) when (ex.IsPermissionProblem)
+        {
+            return new ApplyOutcome
+            {
+                Status = ApplyStatus.NeedsPermission,
+                Message = $"没有权限写入游戏目录：\n{Path.GetDirectoryName(ExePath)}\n\n{ex.Message}\n\n" +
+                          "需要以管理员身份运行本工具，才能替换 X-Plane.exe。",
+                Engine = engine,
+            };
         }
         catch (Exception ex)
         {
@@ -537,6 +579,14 @@ public sealed class PatchService
         try
         {
             ExeWriter.WriteAtomically(ExePath, data, Log);
+        }
+        catch (ExeWriteException ex) when (ex.IsPermissionProblem)
+        {
+            return new RestoreOutcome
+            {
+                Ok = false,
+                Message = $"没有权限写入游戏目录，无法还原。\n需要以管理员身份运行本工具。\n\n{ex.Message}",
+            };
         }
         catch (Exception ex)
         {

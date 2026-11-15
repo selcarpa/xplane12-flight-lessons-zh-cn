@@ -12,7 +12,13 @@ internal sealed class ConfirmWindow : Window
     private readonly CheckBox? _checkbox;
     private bool _confirmed;
 
-    private ConfirmWindow(string title, string message, string? checkText, bool infoOnly)
+    private ConfirmWindow(
+        string title,
+        string message,
+        string? checkText,
+        bool infoOnly,
+        string okText = "继续",
+        string cancelText = "取消")
     {
         Title = title;
         Width = 540;
@@ -55,10 +61,10 @@ internal sealed class ConfirmWindow : Window
         }
         else
         {
-            var cancel = new Button { Content = "取消", MinWidth = 88 };
+            var cancel = new Button { Content = cancelText, MinWidth = 88 };
             cancel.Click += (_, _) => Close(false);
 
-            var ok = new Button { Content = "继续", MinWidth = 88 };
+            var ok = new Button { Content = okText, MinWidth = 88 };
             ok.Click += (_, _) =>
             {
                 if (_checkbox is not null && _checkbox.IsChecked != true)
@@ -78,9 +84,15 @@ internal sealed class ConfirmWindow : Window
         Content = root;
     }
 
-    public static async Task<bool> ShowAsync(Window owner, string title, string message, string? checkText = null)
+    public static async Task<bool> ShowAsync(
+        Window owner,
+        string title,
+        string message,
+        string? checkText = null,
+        string okText = "继续",
+        string cancelText = "取消")
     {
-        var window = new ConfirmWindow(title, message, checkText, infoOnly: false);
+        var window = new ConfirmWindow(title, message, checkText, infoOnly: false, okText, cancelText);
         bool result = await window.ShowDialog<bool>(owner);
         return result && window._confirmed;
     }
