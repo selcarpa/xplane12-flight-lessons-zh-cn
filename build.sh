@@ -28,7 +28,7 @@ dotnet publish src/XpLessonZhCN.csproj -c Release -r linux-x64 --self-contained 
 echo '=== 4/4 打包 ==='
 cd dist/linux-x64
 chmod +x XPlane12-FlightLessons-zh-CN
-cp ../../README.md 使用说明.md
+cp ../../docs/使用说明.md 使用说明.md
 cd ..
 TARBALL=XPlane12-FlightLessons-zh-CN-linux-x64.tar.gz
 rm -f "$TARBALL"

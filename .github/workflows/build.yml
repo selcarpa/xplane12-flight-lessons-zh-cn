@@ -78,7 +78,7 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          Copy-Item README.md dist/${{ matrix.rid }}/使用说明.md
+          Copy-Item docs/使用说明.md dist/${{ matrix.rid }}/使用说明.md
           Compress-Archive -Path "dist/${{ matrix.rid }}/*" -DestinationPath "dist/${{ matrix.artifact }}.zip"
 
       - name: 打包（Linux）
@@ -86,7 +86,7 @@ jobs:
         run: |
           cd dist/${{ matrix.rid }}
           chmod +x XPlane12-FlightLessons-zh-CN
-          cp ../../README.md 使用说明.md
+          cp ../../docs/使用说明.md 使用说明.md
           tar czf "../${{ matrix.artifact }}.tar.gz" *
 
       - name: 生成 SHA256SUMS

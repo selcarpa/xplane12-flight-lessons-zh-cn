@@ -28,6 +28,10 @@ public sealed class MainWindow : Window
     private readonly Button _applyButton = new();
     private readonly Button _restoreButton = new();
     private readonly Button _backupButton = new();
+    private readonly Border _banner = new();
+    private readonly TextBlock _bannerText = new();
+
+    private const string BaseTitle = "X-Plane 12 飞行教学汉化";
 
     private PatchService? _service;
     private Analysis? _analysis;
@@ -39,7 +43,7 @@ public sealed class MainWindow : Window
 
     public MainWindow(string? startupGameDir)
     {
-        Title = "X-Plane 12 飞行教学汉化";
+        Title = BaseTitle;
         Width = 920;
         Height = 660;
         MinWidth = 780;
@@ -84,6 +88,17 @@ public sealed class MainWindow : Window
         pathRow.Children.Add(_pathBox);
         pathRow.Children.Add(_browseButton);
         top.Children.Add(pathRow);
+
+        // 结果横幅：打补丁/还原的结果直接显示在窗口最上方，比只弹一个对话框醒目
+        _bannerText.TextWrapping = TextWrapping.Wrap;
+        _bannerText.FontSize = 14;
+        _bannerText.FontWeight = FontWeight.SemiBold;
+        _banner.Child = _bannerText;
+        _banner.CornerRadius = new CornerRadius(6);
+        _banner.Padding = new Thickness(12, 9);
+        _banner.Margin = new Thickness(0, 2, 0, 2);
+        _banner.IsVisible = false;
+        top.Children.Add(_banner);
 
         // ── 状态信息 ───────────────────────────────────────
         _versionText.Text = "版本：未检查";
@@ -250,6 +265,7 @@ public sealed class MainWindow : Window
     private async Task AnalyzeAsync()
     {
         if (_busy) return;
+        ClearBanner();
 
         string dir = (_pathBox.Text ?? "").Trim();
         if (dir.Length == 0)
@@ -494,6 +510,9 @@ public sealed class MainWindow : Window
                           $"放不下 {outcome.Engine.TooLong} 条，未找到 {outcome.Engine.NotFound} 条。");
             }
 
+            BannerKind bannerKind = BannerKind.Info;
+            string? bannerText = null;
+
             switch (outcome.Status)
             {
                 case ApplyStatus.Applied:
@@ -503,38 +522,53 @@ public sealed class MainWindow : Window
                     AppendLog(verify.Message);
                     if (verify.Ok)
                     {
-                        SetStatus($"补丁完成并通过校验（{outcome.Engine!.Patched} 条）。可以启动游戏了。");
-                        await ConfirmWindow.ShowInfoAsync(this, "补丁完成",
+                        bannerKind = BannerKind.Success;
+                        bannerText = $"✔ 补丁完成：已写入 {outcome.Engine!.Patched} 条译文并通过校验。现在可以启动 X-Plane 12 了！";
+                        SetStatus("✔ 补丁完成并通过校验，可以启动游戏了。");
+                        await ConfirmWindow.ShowInfoAsync(this, "✔ 补丁完成",
                             $"已写入 {outcome.Engine!.Patched} 条译文并通过校验。\n\n" +
-                            $"新 sha256：\n{outcome.PatchedSha256}\n\n" +
-                            "现在可以启动 X-Plane 12，进入「飞行教学」查看中文标题与字幕。");
+                            "现在可以启动 X-Plane 12，进入「飞行教学」——\n" +
+                            "课程标题和口播字幕都会是中文。\n\n" +
+                            $"新 sha256：{outcome.PatchedSha256}");
                     }
                     else
                     {
+                        bannerKind = BannerKind.Error;
+                        bannerText = "✘ 补丁已写入，但校验没通过。建议点「还原原版」。";
                         SetStatus("⚠ 补丁已写入但校验未通过，建议点「还原原版」。");
                         await ConfirmWindow.ShowInfoAsync(this, "校验未通过", verify.Message + "\n\n建议先还原原版，再联系维护者。");
                     }
                     break;
 
                 case ApplyStatus.NeedsSecondaryConfirmation:
+                    bannerKind = BannerKind.Info;
+                    bannerText = "这个版本未经验证，需要二次确认后才能继续。";
                     SetStatus("需要二次确认后才能继续。");
                     break;
 
                 case ApplyStatus.NeedsPermission:
+                    bannerKind = BannerKind.Error;
+                    bannerText = "✘ 没有写入权限，无法替换 X-Plane.exe。";
                     SetStatus("⚠ 没有写入权限。");
                     await OfferElevationAsync(analysis, outcome.Message);
                     break;
 
                 case ApplyStatus.AlreadyPatched:
+                    bannerKind = BannerKind.Info;
+                    bannerText = "当前 exe 已经是补丁后的状态，不需要重复打补丁。";
                     SetStatus("当前 exe 已经是补丁后的状态。");
                     break;
 
                 case ApplyStatus.Failed:
+                    bannerKind = BannerKind.Error;
+                    bannerText = "✘ 打补丁失败：" + FirstLine(outcome.Message);
                     SetStatus("⚠ 打补丁失败：" + outcome.Message);
                     await ConfirmWindow.ShowInfoAsync(this, "打补丁失败", outcome.Message);
                     break;
 
                 default:
+                    bannerKind = BannerKind.Info;
+                    bannerText = "没有需要写入的内容（英文原文可能已经不在 exe 里）。";
                     SetStatus("没有需要写入的内容。");
                     break;
             }
@@ -542,6 +576,8 @@ public sealed class MainWindow : Window
             var fresh = await Task.Run(() => _service.Analyze());
             _analysis = fresh;
             RenderAnalysis();
+
+            if (bannerText is not null) ShowBanner(bannerText, bannerKind);
         });
     }
 
@@ -568,23 +604,35 @@ public sealed class MainWindow : Window
             var outcome = await Task.Run(() => _service.Restore(latest.Name));
             AppendLog(outcome.Message);
 
+            BannerKind bannerKind;
+            string bannerText;
+
             if (!outcome.Ok && outcome.Message.Contains("权限", StringComparison.Ordinal))
             {
+                bannerKind = BannerKind.Error;
+                bannerText = "✘ 没有写入权限，无法还原。";
                 SetStatus("⚠ 没有写入权限，无法还原。");
-                if (_analysis is not null)
-                {
-                    await OfferElevationAsync(_analysis, outcome.Message);
-                }
+                if (_analysis is not null) await OfferElevationAsync(_analysis, outcome.Message);
+            }
+            else if (outcome.Ok)
+            {
+                bannerKind = BannerKind.Success;
+                bannerText = "✔ 已还原为原版 X-Plane.exe，补丁已撤销。";
+                SetStatus("✔ 已还原为原版。");
             }
             else
             {
-                SetStatus(outcome.Ok ? "已还原为原版。" : "⚠ 还原失败：" + outcome.Message);
-                if (!outcome.Ok) await ConfirmWindow.ShowInfoAsync(this, "还原失败", outcome.Message);
+                bannerKind = BannerKind.Error;
+                bannerText = "✘ 还原失败：" + FirstLine(outcome.Message);
+                SetStatus("⚠ 还原失败：" + outcome.Message);
+                await ConfirmWindow.ShowInfoAsync(this, "还原失败", outcome.Message);
             }
 
             var fresh = await Task.Run(() => _service.Analyze());
             _analysis = fresh;
             RenderAnalysis();
+
+            ShowBanner(bannerText, bannerKind);
         });
     }
 
@@ -667,6 +715,53 @@ public sealed class MainWindow : Window
         _backupButton.IsEnabled = !_busy;
     }
 
+    /// <summary>在窗口顶部显示结果横幅，并在标题栏加状态标记。</summary>
+    private void ShowBanner(string text, BannerKind kind)
+    {
+        string back;
+        string border;
+        Color fore;
+
+        switch (kind)
+        {
+            case BannerKind.Success:
+                back = "#E6F4EA"; border = "#9AD8AE"; fore = Colors.DarkGreen;
+                break;
+            case BannerKind.Error:
+                back = "#FDECEA"; border = "#F5B5B1"; fore = Colors.DarkRed;
+                break;
+            default:
+                back = "#E8F0FE"; border = "#B6CDF8"; fore = Color.Parse("#1A56DB");
+                break;
+        }
+
+        _bannerText.Text = text;
+        _bannerText.Foreground = new SolidColorBrush(fore);
+        _banner.Background = new SolidColorBrush(Color.Parse(back));
+        _banner.BorderBrush = new SolidColorBrush(Color.Parse(border));
+        _banner.BorderThickness = new Thickness(1);
+        _banner.IsVisible = true;
+
+        Title = kind switch
+        {
+            BannerKind.Success => BaseTitle + " — ✔ 已完成",
+            BannerKind.Error => BaseTitle + " — 出错了",
+            _ => BaseTitle,
+        };
+    }
+
+    private static string FirstLine(string text)
+    {
+        int index = text.IndexOfAny(new[] { '\r', '\n' });
+        return index < 0 ? text : text[..index];
+    }
+
+    private void ClearBanner()
+    {
+        _banner.IsVisible = false;
+        Title = BaseTitle;
+    }
+
     private void SetStatus(string text)
     {
         _statusText.Text = text;
@@ -693,4 +788,11 @@ public sealed class MainWindow : Window
         settings.LastGameDir = dir;
         settings.Save();
     }
+}
+/// <summary>结果横幅的三种语气。</summary>
+internal enum BannerKind
+{
+    Success,
+    Error,
+    Info,
 }

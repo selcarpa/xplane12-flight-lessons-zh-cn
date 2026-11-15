@@ -34,7 +34,7 @@ dotnet publish src/XpLessonZhCN.csproj -c Release -r win-x64 --self-contained tr
 if ($LASTEXITCODE -ne 0) { throw '发布失败' }
 
 Write-Host '=== 4/5 打包便携版 ==='
-Copy-Item README.md dist/win-x64/使用说明.md -Force
+Copy-Item docs/使用说明.md dist/win-x64/使用说明.md -Force
 $zip = 'dist/XPlane12-FlightLessons-zh-CN-win-x64.zip'
 Remove-Item $zip -ErrorAction SilentlyContinue
 Compress-Archive -Path 'dist/win-x64/*' -DestinationPath $zip
