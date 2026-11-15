@@ -2,7 +2,7 @@
 
 给 **X-Plane 12 的「飞行教学」（Flight Lessons，Austin 的飞行小课堂）** 汉化**课程标题**与**口播字幕**。
 
-- 图形界面，**不需要安装 Python / .NET / 任何运行环境**，解压双击即用
+- 图形界面，**不需要安装任何运行环境**，解压双击即用
 - 支持 **Windows** 与 **Linux（Steam / Proton / Wine）**
 - 自动备份原版、打完自动校验、失败自动回滚，**不改变游戏文件大小、不动代码段**
 
@@ -209,7 +209,7 @@ XPlane12-FlightLessons-zh-CN --path "/path/to/X-Plane 12" --check
 ├─ translations/zh.tsv           译文表（构建时嵌入 exe，exe 旁同名文件可覆盖）
 ├─ compat/known-versions.json    兼容清单（sha256 → 版本信息）
 ├─ tests/SmokeTests/             冒烟测试（核心逻辑 + GUI headless）
-├─ PLAN.md                       重写方案与设计决策
+├─ PLAN.md                         方案与设计决策
 └─ AGENT.md                      维护者须知：已验证事实、设计约束、踩过的坑
 ```
 

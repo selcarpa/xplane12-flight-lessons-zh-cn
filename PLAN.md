@@ -1,8 +1,7 @@
-# PLAN — 跨平台 GUI 重写方案
+# PLAN — 跨平台 GUI 方案
 
 > 状态：**已实施**（v1.0.0，2026-11-15）。本文件保留为设计决策记录；实施偏差见 §16。
-> 目标：把原有的 Python 命令行工具重写为**一个代码库、Windows 与 Linux(Wine/Proton) 双平台**的图形化补丁工具，
-> 用户零安装、解压即用。
+> 目标：**一个代码库、Windows 与 Linux(Wine/Proton) 双平台**的图形化补丁工具，用户零安装、解压即用。
 
 ---
 
@@ -11,7 +10,7 @@
 ### 目标
 | # | 目标 | 验收标准 |
 |---|---|---|
-| G1 | Windows 用户零安装 | 单个 `.exe`，双击运行，不需要装 Python/.NET/任何运行时 |
+| G1 | Windows 用户零安装 | 解压后双击运行，不需要装任何运行时 |
 | G2 | Linux(Wine) 用户零安装 | 单个可执行文件 + 两行命令，不需要装任何依赖 |
 | G3 | 上手成本 ≤ 3 步 | 选目录（可自动）→ 打补丁 → 看到成功；不需要开终端、不需要读文档 |
 | G4 | 不破坏游戏 | 自动备份、打完自校验、失败自动回滚、文件大小/PE 结构不变 |
@@ -98,7 +97,6 @@ X-Plane.exe 内部字符串引用：NotoSansCJK-SC-Regular ×1、Resources/fonts
 | Rust + egui/eframe | ~12 MB | 体积最优，但 Linux 产物**无法在 Windows 上交叉构建**（需 Linux 链接器），且需手工内嵌 CJK 字体；保留为备选 |
 | .NET 9 + 本地 Web UI | ~12 MB | 最稳（零 GUI 依赖、零字体问题），但界面是浏览器标签页；保留为备选 |
 | C# WinForms / net48 | 300 KB | **仅 Windows**，Linux 要靠 Mono 跑 WinForms → 否决 |
-| PyInstaller 打包 Python | 15/60 MB | 会改 exe 的工具 + 自解压 = 杀软高危误报特征 → 否决 |
 | 只发 Windows exe，Linux 用户用 wine 跑本工具 | 300 KB | 改动最小，但要求用户有可用 wine 环境、路径映射混乱、将来原生版无解 → 否决（仅作为应急退路） |
 
 ### 3.3 平台兼容矩阵
@@ -393,7 +391,6 @@ on: tag v* → 自动创建 Release 并附两个产物 + SHA256SUMS
 | 游戏更新导致锚点/文案变化 | 中（长期必然发生） | 补丁失效 | 明确报错 + 版本识别 + 文档化更新锚点流程 |
 | Steam Deck 外置 exFAT 库权限/rename 差异 | 低 | 写入失败 | 回落覆盖写入 + 明确提示 |
 | 双平台行为漂移 | 中 | 结果不一致 | V4 跨平台逐字节比对 + CI 双平台 selftest |
-| 删掉 Python 后失去独立参考实现 | 已发生 | 排障变难 | 金标准哈希写进文档与 `--selftest`；`--verify` 内置不变量检查 |
 
 ---
 
@@ -406,7 +403,7 @@ on: tag v* → 自动创建 Release 并附两个产物 + SHA256SUMS
 | M2 | Platform | 双平台定位/写入/进程/字体探测 | Linux 侧可用 CLI 自测 |
 | M3 | GUI | Avalonia 主窗口 + 状态机 + 日志 + 回滚 | 可视化可用 |
 | M4 | 构建发布 | csproj 发布配置、CI matrix、双平台产物 | Release 素材 |
-| M5 | 文档 | README（小白 3 步）重写、AGENT.md（新架构/踩坑）更新、删旧 `.py` | 可交付 |
+| M5 | 文档 | README（小白 3 步）、AGENT.md（架构/踩坑） | 可交付 |
 
 工作量估计：M1–M2 为主（约 600–800 行 C#），M3 约 500–700 行 XAML/C#，M4–M5 约 200 行配置与文档。
 
@@ -433,7 +430,6 @@ on: tag v* → 自动创建 Release 并附两个产物 + SHA256SUMS
 | 体积 | 30–40 MB | Windows 便携包 **≈53 MB**（exe 39 MB + libSkiaSharp/av_libglesv2/libHarfBuzzSharp 合计 16.7 MB） |
 | 测试 | selftest + 金标准 | ✅ `tests/SmokeTests`（核心自检 + GUI headless 启动）；真 exe 副本端到端验证得到 `36f5b21e…` |
 | 字体 | 检测 + 提示 | ✅ 已实现；实测游戏自带字体 22/22 抽样字形齐全 |
-| Python | 保留参考实现 | ✅ 已按用户要求**删除**（结论已并入 AGENT.md） |
 
 新增的关键实现约定：**兼容清单** `compat/known-versions.json` + **未验证版本二次确认** +
 **写入前后双向 sha256 校验**（详见 AGENT.md §2）。

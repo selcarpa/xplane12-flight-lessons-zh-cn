@@ -20,7 +20,7 @@ public sealed class StringEntry
 
 /// <summary>
 /// 在 PE 里定位「飞行教学」文本区间，并读写其中的 C 字符串。
-/// 规则与 Python 版 common.py / apply.py 逐条对齐（见 AGENT.md）。
+/// 规则见 AGENT.md（锚点、区间、safe_span、长度只减不增）。
 /// </summary>
 public sealed class PeImage
 {
