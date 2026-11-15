@@ -1,0 +1,7 @@
+# 生成物与本地文件（默认都在 <游戏目录>/.zh_cn_translate/ 下）
+__pycache__/
+*.py[cod]
+data/
+backup/
+*.bak
+*.stage
