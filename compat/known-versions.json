@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "note": "X-Plane.exe 兼容清单。sha256 为原版 exe 的哈希；打补丁后的哈希用于结果校验。未列入的版本需要在二次确认后才会打补丁。",
+  "updatedAt": "2026-11-15",
+  "versions": [
+    {
+      "id": "12.4.3-r2-124311",
+      "displayName": "X-Plane 12.4.3-r2 (build 124311)",
+      "status": "verified",
+      "exeSize": 91132488,
+      "sha256": "2ca099b7c6b218e78d02bdbe298be2aebf670b67c5adff827449b065e1107936",
+      "patchedSha256": "36f5b21eb869e94e75a71de0aa7a4235976e16677424ad5421a45ac6b367131e",
+      "regionStart": 41552520,
+      "regionEnd": 41612728,
+      "candidates": 621,
+      "entries": 513,
+      "patchStats": {
+        "patched": 513,
+        "skipped": 8,
+        "tooLong": 0
+      },
+      "platforms": [ "windows", "linux-wine" ],
+      "verifiedOn": "2026-11-15",
+      "notes": "当前唯一验证版本。Linux 侧指 Steam/Proton(Wine) 运行同一个 X-Plane.exe；原生 Linux 版(ELF)不在支持范围。"
+    }
+  ]
+}

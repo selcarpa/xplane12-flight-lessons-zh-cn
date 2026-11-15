@@ -5,3 +5,11 @@ data/
 backup/
 *.bak
 *.stage
+
+# .NET 构建产物
+bin/
+obj/
+dist/
+.dotnet/
+.nuget/
+*.user

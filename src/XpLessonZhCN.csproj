@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>XPlane12-FlightLessons-zh-CN</AssemblyName>
+    <RootNamespace>XpLessonZhCn</RootNamespace>
+    <Version>1.0.0</Version>
+    <FileVersion>1.0.0.0</FileVersion>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <AssemblyTitle>X-Plane 12 飞行教学汉化</AssemblyTitle>
+    <Product>X-Plane 12 飞行教学汉化</Product>
+    <Company>selcarpa</Company>
+    <Description>给 X-Plane 12「飞行教学」打中文字幕与课程标题补丁（支持 Windows 与 Linux/Wine）</Description>
+    <Copyright>MIT License</Copyright>
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <DebugType>none</DebugType>
+    <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="..\translations\zh.tsv" LogicalName="translations.zh.tsv" />
+    <EmbeddedResource Include="..\compat\known-versions.json" LogicalName="compat.known-versions.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.3.23" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.23" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.23" />
+  </ItemGroup>
+
+</Project>
