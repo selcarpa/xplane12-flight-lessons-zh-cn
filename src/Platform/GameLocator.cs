@@ -57,28 +57,10 @@ public sealed class Settings
 /// </summary>
 public static class GameLocator
 {
-    public const string ExeName = "X-Plane.exe";
     public const string GameFolderName = "X-Plane 12";
 
-    public static bool IsGameDir(string? dir)
-    {
-        if (string.IsNullOrWhiteSpace(dir) || !Directory.Exists(dir)) return false;
-        if (File.Exists(Path.Combine(dir, ExeName))) return true;
-
-        // ext4 等大小写敏感文件系统上的兜底
-        try
-        {
-            foreach (string file in Directory.EnumerateFiles(dir))
-            {
-                if (string.Equals(Path.GetFileName(file), ExeName, StringComparison.OrdinalIgnoreCase)) return true;
-            }
-        }
-        catch (Exception)
-        {
-            // 目录不可读
-        }
-        return false;
-    }
+    /// <summary>目录里存在 X-Plane 可执行文件（Windows 版 X-Plane.exe 或 Linux 原生版）即视为游戏目录。</summary>
+    public static bool IsGameDir(string? dir) => GameExecutableResolver.IsGameDir(dir);
 
     public static string? Find(string? explicitPath, Action<string>? log = null)
     {
@@ -121,9 +103,26 @@ public static class GameLocator
             Add(Path.Combine(library, GameFolderName));
         }
 
-        Add(SearchUpward(Environment.CurrentDirectory));
+        Add(SearchUpward(CurrentDirectoryOrNull()));
         Add(SearchUpward(AppContext.BaseDirectory));
         return list;
+    }
+
+    /// <summary>
+    /// 当前工作目录。目录已被删除时（便携程序从临时解压目录启动、启动后临时目录被清理），
+    /// <see cref="Environment.CurrentDirectory"/> 会抛 <c>FileNotFoundException</c>；
+    /// 这里降级为 null，只是少一个「向上搜索」的起点，不影响其他候选。
+    /// </summary>
+    internal static string? CurrentDirectoryOrNull()
+    {
+        try
+        {
+            return Environment.CurrentDirectory;
+        }
+        catch (Exception)
+        {
+            return null;
+        }
     }
 
     private static string? SearchUpward(string? start)

@@ -9,7 +9,7 @@ public static class ProcessProbe
 {
     private static readonly string[] LinuxMarkers =
     {
-        "X-Plane.exe",
+        "X-Plane",      // 覆盖 X-Plane.exe（Wine/Proton）与 X-Plane-x86_64 / X-Plane（原生；comm 截断为 15 字符）
         "wineserver",
         "wine64-preloader",
         "proton",

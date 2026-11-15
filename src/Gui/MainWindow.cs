@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using Avalonia;
@@ -133,7 +132,7 @@ public sealed class MainWindow : Window
         _restoreButton.Click += async (_, _) => await RestoreAsync();
 
         _backupButton.Content = "打开备份目录";
-        _backupButton.Click += (_, _) => OpenBackupDir();
+        _backupButton.Click += async (_, _) => await OpenBackupDirAsync();
 
         foreach (var button in new[] { _checkButton, _dryRunButton, _applyButton, _restoreButton, _backupButton })
         {
@@ -197,7 +196,7 @@ public sealed class MainWindow : Window
     private async Task InitializeAsync(string? startupGameDir)
     {
         AppendLog($"X-Plane 12 飞行教学汉化 v{AppVersion.Display}");
-        AppendLog($"运行平台：{(OperatingSystem.IsWindows() ? "Windows" : OperatingSystem.IsLinux() ? "Linux" : "其他")} · 支持 Windows 与 Linux(Wine/Proton)");
+        AppendLog($"运行平台：{(OperatingSystem.IsWindows() ? "Windows" : OperatingSystem.IsLinux() ? "Linux" : "其他")} · 支持 Windows 与 Linux（Wine/Proton 及 Linux 原生版）");
         AppendLog($"程序目录：{AppContext.BaseDirectory}");
         AppendLog($"备份/日志：{PathPolicy.WorkDir}");
         if (RunLog.FilePath is null)
@@ -291,7 +290,7 @@ public sealed class MainWindow : Window
             {
                 _service = null;
                 _analysis = null;
-                SetStatus("没有在所选目录找到 X-Plane.exe，请确认路径是否指向游戏根目录。");
+                SetStatus("没有在所选目录找到 X-Plane 可执行文件（X-Plane.exe / X-Plane-x86_64 / X-Plane），请确认路径是否指向游戏根目录。");
                 UpdateButtons();
                 return;
             }
@@ -333,7 +332,7 @@ public sealed class MainWindow : Window
             ? "兼容清单已验证"
             : analysis.AlreadyPatched ? "兼容清单已验证" : "⚠ 不在兼容清单中（需二次确认）";
 
-        _versionText.Text = $"版本：{analysis.VersionText} · {patchState} · {known}";
+        _versionText.Text = $"版本：{analysis.VersionText} · {analysis.KindText} · {patchState} · {known}";
         _versionText.Foreground = analysis.NeedsSecondaryConfirmation ? Brushes.OrangeRed : Brushes.DimGray;
 
         _fontText.Text = analysis.Font.Ok
@@ -342,9 +341,11 @@ public sealed class MainWindow : Window
               "修复方法：Steam → 右键 X-Plane 12 → 属性 → 已安装文件 → 验证游戏文件完整性。";
         _fontText.Foreground = analysis.Font.Ok ? Brushes.DimGray : Brushes.OrangeRed;
 
-        _statsText.Text = $"译文 {analysis.Entries} 条 ｜ 已应用 {analysis.Applied} ｜ 待应用 {analysis.Pending} ｜ " +
-                          $"缺失 {analysis.Missing} ｜ 候选字符串 {analysis.Candidates} 条 ｜ 备份 {analysis.BackupCount} 份";
-        _statsText.Foreground = analysis.Missing > 0 ? Brushes.OrangeRed : Brushes.Black;
+        string notApplicable = analysis.NotApplicable > 0
+            ? $" ｜ 不适用 {analysis.NotApplicable}（本平台无此文案）"
+            : "";
+        _statsText.Text = $"译文 {analysis.Entries} 条 ｜ 已应用 {analysis.Applied} ｜ 待应用 {analysis.Pending}" +
+                          $"{notApplicable} ｜ 候选字符串 {analysis.Candidates} 条 ｜ 备份 {analysis.BackupCount} 份";
 
         if (analysis.GameRunning)
         {
@@ -477,7 +478,7 @@ public sealed class MainWindow : Window
         // 权限不足时先解释、再请求提权，不要闷头失败
         if (analysis.NeedsElevationGain)
         {
-            await OfferElevationAsync(analysis, "打补丁需要替换游戏目录里的 X-Plane.exe，但当前账户对该目录没有写权限。");
+            await OfferElevationAsync(analysis, $"打补丁需要替换游戏目录里的 {analysis.ExeName}，但当前账户对该目录没有写权限。");
             return;
         }
 
@@ -549,7 +550,7 @@ public sealed class MainWindow : Window
 
                 case ApplyStatus.NeedsPermission:
                     bannerKind = BannerKind.Error;
-                    bannerText = "✘ 没有写入权限，无法替换 X-Plane.exe。";
+                    bannerText = $"✘ 没有写入权限，无法替换 {analysis.ExeName}。";
                     SetStatus("⚠ 没有写入权限。");
                     await OfferElevationAsync(analysis, outcome.Message);
                     break;
@@ -595,8 +596,9 @@ public sealed class MainWindow : Window
         }
 
         var latest = backups[0];
+        string exeName = Path.GetFileName(_service!.ExePath);
         bool ok = await ConfirmWindow.ShowAsync(this, "确认还原原版",
-            $"将用备份还原 X-Plane.exe：\n{latest.Name}\n（{latest.Size:N0} 字节，{latest.Modified:yyyy-MM-dd HH:mm}）\n\n还原后所有汉化会消失。");
+            $"将用备份还原 {exeName}：\n{latest.Name}\n（{latest.Size:N0} 字节，{latest.Modified:yyyy-MM-dd HH:mm}）\n\n还原后所有汉化会消失。");
 
         if (!ok) return;
 
@@ -618,7 +620,7 @@ public sealed class MainWindow : Window
             else if (outcome.Ok)
             {
                 bannerKind = BannerKind.Success;
-                bannerText = "✔ 已还原为原版 X-Plane.exe，补丁已撤销。";
+                bannerText = $"✔ 已还原为原版 {Path.GetFileName(_service!.ExePath)}，补丁已撤销。";
                 SetStatus("✔ 已还原为原版。");
             }
             else
@@ -638,26 +640,21 @@ public sealed class MainWindow : Window
     }
 
     /// <summary>备份固定放在程序目录下的 .zh_cn_translate/backup。</summary>
-    private void OpenBackupDir()
+    private async Task OpenBackupDirAsync()
     {
         string dir = PathPolicy.BackupDir;
-        try
+        DirectoryOpener.Result result = await DirectoryOpener.OpenAsync(dir);
+        if (result.Ok)
         {
-            Directory.CreateDirectory(dir);
+            AppendLog($"已在文件管理器中打开备份目录：{dir}");
+            SetStatus("已在文件管理器中打开备份目录。");
+            return;
+        }
 
-            if (OperatingSystem.IsWindows())
-            {
-                Process.Start(new ProcessStartInfo("explorer.exe", $"\"{dir}\"") { UseShellExecute = true });
-            }
-            else
-            {
-                Process.Start(new ProcessStartInfo("xdg-open", $"\"{dir}\"") { UseShellExecute = true });
-            }
-        }
-        catch (Exception ex)
-        {
-            AppendLog($"打开目录失败：{ex.Message}");
-        }
+        // 打不开不是致命错误：把原因和路径都写进日志，用户至少能手动打开
+        AppendLog($"打开目录失败：{result.Error}");
+        AppendLog($"请手动打开备份目录：{dir}");
+        SetStatus("⚠ 无法自动打开文件管理器，请按日志里的路径手动打开。");
     }
 
     private async Task CopyLogAsync()

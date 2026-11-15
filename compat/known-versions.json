@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "note": "X-Plane.exe 兼容清单。sha256 为原版 exe 的哈希；打补丁后的哈希用于结果校验。未列入的版本需要在二次确认后才会打补丁。",
+  "note": "X-Plane 12 可执行文件兼容清单。sha256 为原版（Windows 版 X-Plane.exe 或 Linux 原生版 X-Plane-x86_64）的哈希；打补丁后的哈希用于结果校验。未列入的版本需要在二次确认后才会打补丁。",
   "updatedAt": "2026-11-15",
   "versions": [
     {
@@ -9,7 +9,7 @@
       "status": "verified",
       "exeSize": 91132488,
       "sha256": "2ca099b7c6b218e78d02bdbe298be2aebf670b67c5adff827449b065e1107936",
-      "patchedSha256": "36f5b21eb869e94e75a71de0aa7a4235976e16677424ad5421a45ac6b367131e",
+      "patchedSha256": "d021f2656852416686e9f9c6222db90111ef791eea7967c839ade03e2e7efdbb",
       "regionStart": 41552520,
       "regionEnd": 41612728,
       "candidates": 621,
@@ -17,11 +17,33 @@
       "patchStats": {
         "patched": 513,
         "skipped": 8,
-        "tooLong": 0
+        "tooLong": 0,
+        "notFound": 0
       },
       "platforms": [ "windows", "linux-wine" ],
       "verifiedOn": "2026-11-15",
-      "notes": "当前唯一验证版本。Linux 侧指 Steam/Proton(Wine) 运行同一个 X-Plane.exe；原生 Linux 版(ELF)不在支持范围。"
+      "notes": "Windows 版（X-Plane.exe）。Linux 侧指 Steam/Proton(Wine) 运行同一个 X-Plane.exe；译文表 translations/zh.csv（与 Linux 原生版同一条译文）。"
+    },
+    {
+      "id": "12.4.3-r2-124311-linux-native",
+      "displayName": "X-Plane 12.4.3-r2 (build 124311) Linux 原生版",
+      "status": "verified",
+      "exeSize": 76056352,
+      "sha256": "0fe6bc5c5d661633840bc5eba0de88d8def190f1ff40f6a7011d9252cc63eabb",
+      "patchedSha256": "52218d9089e491f496bf96701989ab5b0a83eb76061086b21e0b9d786b88480e",
+      "regionStart": 47827431,
+      "regionEnd": 47880969,
+      "candidates": 614,
+      "entries": 513,
+      "patchStats": {
+        "patched": 503,
+        "skipped": 7,
+        "tooLong": 0,
+        "notFound": 9
+      },
+      "platforms": [ "linux-native" ],
+      "verifiedOn": "2026-11-15",
+      "notes": "Linux 原生版（X-Plane-x86_64，ELF）。与 Windows 共用同一张译文表 translations/zh.csv（单一译文 + 每条字节上限，两平台显示一致）。9 条 not-found 为 Windows 版独有词条（Linux 版不存在或非独立字符串），属正常平台差异。"
     }
   ]
 }

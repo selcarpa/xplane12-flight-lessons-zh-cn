@@ -19,7 +19,7 @@ public sealed class VerifyReport
         var parts = new List<string>
         {
             SizeSame ? "大小不变" : "大小变化",
-            PeHeaderSame ? "PE 头未改" : "PE 头被改动",
+            PeHeaderSame ? "文件头未改" : "文件头被改动",
             TailSame ? "文件尾未改" : "文件尾被改动",
             $"{ChangedRanges} 段改动 / {ChangedBytes:N0} 字节",
         };

@@ -13,6 +13,9 @@ public sealed class PatchStats
     public int Patched { get; set; }
     public int Skipped { get; set; }
     public int TooLong { get; set; }
+
+    /// <summary>英文原文不在二进制里的条数（Linux 原生版与 Windows 版文案有差异，可为非 0）。</summary>
+    public int NotFound { get; set; }
 }
 
 /// <summary>兼容清单里的一条版本记录。</summary>

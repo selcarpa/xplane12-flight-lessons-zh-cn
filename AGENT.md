@@ -9,22 +9,39 @@
 
 ### 1.1 游戏与补丁对象
 
+Windows 版（`X-Plane.exe`，PE）：
+
 | 项目 | 值 |
 |---|---|
 | 版本 | X-Plane **12.4.3-r2**，build **124311**，Intel 64-bit |
 | Steam AppID | **2014780** |
 | `X-Plane.exe` 大小 | **91,132,488** 字节 |
 | 原版 sha256 | `2ca099b7c6b218e78d02bdbe298be2aebf670b67c5adff827449b065e1107936` |
-| 打完补丁 sha256 | `36f5b21eb869e94e75a71de0aa7a4235976e16677424ad5421a45ac6b367131e` |
+| 打完补丁 sha256 | `d021f2656852416686e9f9c6222db90111ef791eea7967c839ade03e2e7efdbb` |
 | 文本区间 | `41,552,520 .. 41,612,728`（起止锚点见 §4） |
 | 区间内候选字符串 | **621** 条 |
 | 译文条数 | **513**（8 课程标题 + 505 口播字幕） |
 | 补丁统计 | patched **513** / skipped **8**（前缀重叠）/ too-long **0** / not-found **0** |
-| 改动量 | **787 段 / 45,186 字节**（占文件 0.0496%） |
+| 改动量 | **785 段 / 45,097 字节**（占文件 0.0495%） |
 | 文件结构 | 大小、PE 头 `[:0x400]`、文件尾 `[-0x1000:]` 均不变 |
 
-> 🎯 **金标准**：任何实现（Windows / Linux）在 exe 副本上打完补丁都必须得到
-> `36f5b21e…`。C# 版已实测逐字节一致。
+Linux 原生版（`X-Plane-x86_64`，ELF）：
+
+| 项目 | 值 |
+|---|---|
+| 版本 | X-Plane **12.4.3-r2**，build **124311**（`Compiled on Jun 24 2026 15:40:13`） |
+| `X-Plane-x86_64` 大小 | **76,056,352** 字节 |
+| 原版 sha256 | `0fe6bc5c5d661633840bc5eba0de88d8def190f1ff40f6a7011d9252cc63eabb` |
+| 打完补丁 sha256 | `52218d9089e491f496bf96701989ab5b0a83eb76061086b21e0b9d786b88480e` |
+| 文本区间 | `47,827,431 .. 47,880,969`（同一对锚点，字节搜索即可定位） |
+| 区间内候选字符串 | **614** 条 |
+| 译文条数 | **单一共用表 513 条**（两平台同一条译文；Linux 上 8 条词条不适用，见 §9） |
+| 补丁统计 | patched **503** / skipped **7** / too-long **0** / not-found **9**（8 条 Windows 独有 + 1 条被长句先覆盖，见 §9） |
+| 改动量 | **773 段 / 44,632 字节** |
+| 文件结构 | 大小、ELF 头 `[:0x400]`、文件尾 `[-0x1000:]` 均不变 |
+
+> 🎯 **金标准**：任何实现（Windows / Linux）在可执行文件副本上打完补丁都必须得到对应的
+> 补丁后 sha256（Windows `d021f265…`，Linux 原生 `52218d90…`）。C# 版已实测逐字节一致。
 
 ### 1.2 字体（决定「Wine 下中文会不会变方块」）
 
@@ -37,16 +54,32 @@ X-Plane.exe 里引用了该文件名（NotoSansCJK-SC-Regular ×1、Resources/fo
 **结论**：字幕渲染用**游戏自带字体**，与系统字体无关；Wine/Proton 下干净 prefix 也不需要装中文字体。
 工具只做**检测 + 提示**（`WineFontProbe`），不装字体、不改 prefix。
 
-### 1.3 Wine / Proton 场景
+### 1.3 Wine / Proton 与 Linux 原生版
 
-- Wine 跑的就是同一个 PE `X-Plane.exe`，字节补丁逻辑 100% 复用，**没有第二套实现**。
+- Wine/Proton 跑的就是同一个 PE `X-Plane.exe`，字节补丁逻辑 100% 复用，**没有第二套实现**。
+- **Linux 原生版（X-Plane-x86_64，ELF）**：同一套字节逻辑直接复用（锚点、safe_span、长度只减不增
+  全部一样），只是文件名/类型不同。**可执行文件类型由魔数自动检测**（`Core/ImageFormat.cs`：
+  MZ → PE，`\x7FELF` → ELF），与文件扩展名无关。
 - 直接在 Linux 文件系统上改 Steam 库里的文件，**不进 Wine prefix**。
 - Linux 没有 NTFS「低完整性标签」问题，但**必须保住可执行位**（见 §4.6）。
 
-### 1.4 教学文本为什么在 exe 里
+### 1.4 教学文本为什么在可执行文件里
 
 课程标题与口播字幕是**编译进只读数据段的 UTF-8 C 字符串**，运行时按地址引用，
 不走 `Resources/text/*.txt` 翻译表。所有语言表里都没有这些字符串（Laminar 没提取）。
+**注意：Windows 版与 Linux 原生版的口播字幕是同一套内容但不同编译版本**，文案有细微差异
+（例如 Linux 版个别句子带 `E`/`A`/`?` 前缀垃圾字符、`mrakes`/`ip` 等笔误），
+且 ELF 里字符串紧凑排列（字符串之间几乎没有填充空间，可用字节 = 英文字符串自身长度）。
+
+**统一译文表（设计决定）**：Windows 与 Linux 原生版**共用同一张** `translations/zh.csv`
+（标准 CSV，方便用表格软件维护），列：`english,chinese,budget_bytes`：
+
+- 每个词条**只有一条译文**，两个平台显示完全一致（不再维护"完整版/短版"两套）；
+- `budget_bytes` 是该词条允许写入的最大 UTF-8 字节数：取当前验证版本里**最紧的发生位置**
+  （Linux 原生版优先；Linux 无独立出现时取 Windows 版）。ELF 字符串紧凑排列，
+  部分长句的上限就是英文字符串自身长度，译文必须在限制内表达清楚；
+- 自检会校验「每条中文 ≤ budget_bytes」，`--dry-run`/`--apply` 仍以实际二进制 safe_span 为准；
+- 好处：单文件维护、双平台显示一致；当前金标准 Windows `d021f265…`、Linux `52218d90…`。
 
 ---
 
@@ -54,7 +87,7 @@ X-Plane.exe 里引用了该文件名（NotoSansCJK-SC-Regular ×1、Resources/fo
 
 ### 2.1 清单
 
-[`compat/known-versions.json`](compat/known-versions.json) 记录「哪些 exe 版本可信」：
+[`compat/known-versions.json`](compat/known-versions.json) 记录「哪些可执行文件版本可信」（Windows PE 与 Linux 原生 ELF 各一条）：
 
 ```json
 {
@@ -62,7 +95,7 @@ X-Plane.exe 里引用了该文件名（NotoSansCJK-SC-Regular ×1、Resources/fo
   "displayName": "X-Plane 12.4.3-r2 (build 124311)",
   "status": "verified",
   "exeSize": 91132488,
-  "sha256": "<原版 sha256>",
+  "sha256": "<Windows 原版 sha256>",
   "patchedSha256": "<打完补丁的 sha256>",
   "regionStart": 41552520, "regionEnd": 41612728,
   "candidates": 621, "entries": 513,
@@ -72,7 +105,9 @@ X-Plane.exe 里引用了该文件名（NotoSansCJK-SC-Regular ×1、Resources/fo
 }
 ```
 
-**当前只收录 1 个版本**（12.4.3-r2）。清单同时被编译进 exe；exe 同目录的
+Linux 原生版条目字段含义相同（`exeSize` 76,056,352、`regionStart/End` 47,827,431/47,880,969、
+`entries` 513（共用表）、`patchStats` { patched 503 / skipped 7 / tooLong 0 / notFound 9 }、
+`platforms: ["linux-native"]`）。清单同时被编译进 exe；exe 同目录的
 `compat/known-versions.json` 会覆盖内置版本。
 
 ### 2.2 校验链（`PatchService`）
@@ -105,18 +140,21 @@ X-Plane.exe 里引用了该文件名（NotoSansCJK-SC-Regular ×1、Resources/fo
 ```
 src/
 ├─ Core/                 平台无关，纯字节逻辑
-│  ├─ PeImage.cs         锚点定位、区间、字符串枚举、safe_span、只读字符串解析
+│  ├─ LessonImage.cs     锚点定位、区间、字符串枚举、safe_span、只读字符串解析（PE/ELF 通用）
+│  ├─ ImageFormat.cs     可执行文件类型检测（魔数：MZ→PE，\x7FELF→ELF）
 │  ├─ PatchEngine.cs     occurrences + patch_one + 统计（返回改动区间）
 │  ├─ Verifier.cs        结构不变量 + 改动范围校验
 │  ├─ CompatManifest.cs  兼容清单模型 / 内置资源加载
-│  └─ Translations.cs    TSV 解析（内置 + 外部覆盖）
+│  └─ Translations.cs    CSV 解析（单表 english,chinese,budget_bytes；标准 CSV 引号/转义）
 ├─ Platform/             平台差异全在这里（Core 里不允许出现 OperatingSystem 判断）
 │  ├─ GameLocator.cs     定位游戏：参数 → 环境变量 → 上次 → Steam VDF → 向上搜索
+│  ├─ GameExecutable.cs  解析可执行文件：按平台候选顺序 + 魔数自动检测类型
 │  ├─ ExeWriter.cs       原子替换（Windows 写父目录；Linux chmod 0755 + rename）
-│  ├─ ProcessProbe.cs    游戏是否在运行（Windows 进程名 / Linux /proc）
+│  ├─ ProcessProbe.cs    游戏是否在运行（Windows 进程名 / Linux /proc，含 X-Plane-x86_64）
 │  ├─ WineFontProbe.cs   自带字体完整性检测（检测+提示，不安装）
 │  ├─ SfntCmap.cs        最小 sfnt/cmap 解析（判断字体有无某字形）
 │  ├─ PathPolicy.cs      工作目录 = **程序目录**/.zh_cn_translate（便携，不写游戏/用户目录）
+│  ├─ DirectoryOpener.cs 打开备份目录（按 PATH 解析绝对路径，不依赖当前工作目录）
 │  ├─ RunLog.cs          运行日志 log.txt（GUI 与 CLI 都写）
 │  └─ Elevation.cs       管理员/root 判断 + Windows 提权重启
 ├─ Service/PatchService.cs   Analyze / Apply / DryRun / Verify / Restore / ListBackups
@@ -126,6 +164,8 @@ tests/SmokeTests/        核心自检 + GUI headless 启动（CI 跑这个）
 ```
 
 `Cli` 与 `Gui` 共用同一个 `PatchService`，不允许在 GUI 里重复实现补丁逻辑。
+译文表**只有一份**：`translations/zh.csv`（Windows 与 Linux 原生版共用，513 条；
+`english,chinese,budget_bytes` 三列，`budget_bytes` 记录该条在目标二进制里的字节上限）。
 
 ### 3.1 运行时产物（全部在程序目录下，便携设计）
 
@@ -206,6 +246,15 @@ tests/SmokeTests/        核心自检 + GUI headless 启动（CI 跑这个）
       for extracting embedded files`，错误码 5）。
     所以固定发布**便携目录版**（`IncludeNativeLibrariesForSelfExtract=false`，3 个原生库与 exe 同目录，
     再打 zip），不要重新引入单文件变体。
+12. **进程的当前目录被删除后，别用相对路径启动进程**：便携程序可能从临时解压目录/测试夹具启动，
+    启动后那个目录被清理掉，此时 `Directory.GetCurrentDirectory()` 会抛
+    `FileNotFoundException: Unable to find the specified file.`。`Process.Start("xdg-open", …)`
+    这种「相对程序名」在 Unix 上会先调 getcwd 解析程序位置，于是 GUI 点「打开备份目录」直接
+    报 `打开目录失败：Unable to find the specified file.`（同时 `GameLocator` 的「当前目录向上
+    搜索」候选也会在启动时抛异常）。
+    → 统一走 `Platform/DirectoryOpener.cs`：按 PATH 解析出**绝对路径**再启动，并显式设置子进程
+    `WorkingDirectory`；`GameLocator` 里读当前目录用 `CurrentDirectoryOrNull()` 降级，不要直接读
+    `Environment.CurrentDirectory`。自检 `directory_opener / cwd_resilience` 会复现这个现场。
 
 ---
 
@@ -221,6 +270,10 @@ tests/SmokeTests/        核心自检 + GUI headless 启动（CI 跑这个）
 ./build.sh
 ```
 
+> 本地脚本只产出当前平台的 x64 包；`win-arm64` / `linux-arm64` 由 CI 在 ARM64 runner 上原生构建。
+> 本机也可以 `dotnet publish -r win-arm64`（或 `-r linux-arm64`）交叉发布，但 x64 机器上无法运行
+> ARM64 产物，所以「产物能启动」的校验只能在 CI 的 ARM64 runner 上做。
+
 ### 本地端到端验证（需要游戏 exe 的副本，**不要动真游戏**）
 
 > 备份与日志落在**程序目录**的 `.zh_cn_translate/`，不在副本目录；验证完删掉程序目录里的
@@ -235,7 +288,7 @@ tests/SmokeTests/        核心自检 + GUI headless 启动（CI 跑这个）
 # 4) 打补丁（必须得到金标准哈希）
 ... --apply --path "<副本目录>"
 (Get-FileHash "<副本目录>\X-Plane.exe" -Algorithm SHA256).Hash.ToLower()
-#   → 36f5b21eb869e94e75a71de0aa7a4235976e16677424ad5421a45ac6b367131e
+#   → d021f2656852416686e9f9c6222db90111ef791eea7967c839ade03e2e7efdbb
 # 5) 校验 / 还原
 ... --verify --path "<副本目录>"
 ... --restore --path "<副本目录>"
@@ -247,6 +300,8 @@ tests/SmokeTests/        核心自检 + GUI headless 启动（CI 跑这个）
 - `dotnet run --project tests/SmokeTests`：自检 + GUI headless 启动（CI 双平台都跑）
 - `--font-check`：真实 OTF 解析（应报「抽样 22/22 字形齐全」）
 - 未验证版本：改副本 1 个字节 → `--apply` 应拒绝（exit 1），`--apply --force` 才执行
+- 回归项「打开备份目录」：把 GUI 从临时目录启动 → 启动后删掉该目录 → 再点「打开备份目录」，
+  应正常打开（旧实现会报 `Unable to find the specified file.`）
 
 ---
 
@@ -278,6 +333,23 @@ tests/SmokeTests/        核心自检 + GUI headless 启动（CI 跑这个）
 - **8 条 skipped**：都是更长字符串的前缀（如 `Flaps up!`），不是漏译。
 - **~22 条评分项标签**（`Throttle Control.` / `RPM Control` / … / `Pass/Fail`）未翻译，
   且**不在任何语言表里**；如果要译，需要新加译文并在清单里更新 patched sha256（会改变金标准）。
+- **Linux 原生版差异**（共用表里这些词条在 Linux 上算「不适用 / not-found」，均属正常）：
+  - `Tesla Model 3 Test-Drive` 标题在 Linux 版**不存在为独立字符串**（Tesla 课程在，标题串缺失）；
+  - 3 条带前缀垃圾字符的句子（`EWe're going to fly…` / `?I'm gonna show you…` / `ALet's get going…`）
+    前一字节非 `0x00`，不是独立字符串起点，按「只认字符串起点」规则不打（Linux 版自身文案瑕疵）；
+  - `A touch-n-go is a landing…`、`Flaps up!`、`Flaps up! 120 knots…` 等在 Linux 版
+    不存在或只是长句前缀；
+  - `Brakes off!` 在 Linux 版只是长句 `Brakes off! That's the …` 的前缀：长句在表里排前面、
+    先被翻译成中文，等轮到短词条时已找不到原文 → 记 not-found；Windows 版它是独立字符串
+    （真实补丁报告里 patched），不受影响。最终字节正确（字幕显示的是那条长句的中文）。
+- **单一译文 + 字节上限**：每个词条只有一条译文（两平台一致）；`budget_bytes` 记录该条在
+  目标二进制里的最大可用字节数（Linux 原生版优先取最紧位置，Linux 无独立出现时取 Windows）。
+  改译文表时：中文 UTF-8 字节数必须 ≤ `budget_bytes`（自检会校验），改完务必跑 `--dry-run`
+  并对副本做一次端到端验证（哈希要与清单一致）。不要再引入"完整版/短版"双译文机制。
+- **ARM64 产物未经实机验证**：`win-arm64` / `linux-arm64` 只在 GitHub ARM64 runner 上跑
+  冒烟测试与 `--selftest`（合成数据），**没有**在真实 Windows on ARM / ARM64 Linux 设备上运行过，
+  也没有对真实游戏目录打过补丁（作者无 ARM 硬件）。Release 说明、README、包内 `使用说明.md`
+  必须保留「未经实机测试」标注，不要写成已验证；等有 ARM 设备实测后再改。
 - **GUI 界面中文依赖系统字体**：Windows 一般有；极简 Linux 桌面若缺中文字体，界面会显示方块
   （不影响游戏字幕）。可在 `UiFonts.Preferred` 里补充候选字体名。
 
@@ -298,10 +370,28 @@ git push origin v0.1.0
 
 触发后会发生什么：
 
-1. `build` job 在 Windows / Linux 各跑一遍：冒烟测试 → 发布便携版（Windows 为 zip、Linux 为 tar.gz）→ 校验产物能启动 → 上传 artifact。
-2. `release` job 等两个平台都成功后，下载全部 artifact、合并成一份 `SHA256SUMS.txt`，创建 Release 并挂上
-   `zip` / `tar.gz` / `SHA256SUMS.txt`。
+1. `build` job 在四个 runner 上各跑一遍（**原生架构构建 + 冒烟自检**，不是交叉编译）：
+
+   | runner | RID | 产物 |
+   |---|---|---|
+   | `windows-latest` | `win-x64` | `XPlane12-FlightLessons-zh-CN-win-x64.zip` |
+   | `windows-11-arm` | `win-arm64` | `XPlane12-FlightLessons-zh-CN-win-arm64.zip`（⚠️ 未经实机测试） |
+   | `ubuntu-latest` | `linux-x64` | `XPlane12-FlightLessons-zh-CN-linux-x64.tar.gz` |
+   | `ubuntu-24.04-arm` | `linux-arm64` | `XPlane12-FlightLessons-zh-CN-linux-arm64.tar.gz`（⚠️ 未经实机测试） |
+
+   每个 job：冒烟测试（核心自检 + GUI headless）→ 发布便携版 → 校验发布产物能启动（`--selftest`）→ 上传 artifact。
+2. `release` job 等四个 job 都成功后，下载全部 artifact、合并成一份 `SHA256SUMS.txt`，创建 Release 并挂上
+   4 个包（Windows 为 zip、Linux 为 tar.gz）与 `SHA256SUMS.txt`。
 3. tag 名里带 `-` 的（如 `v0.1.0-snapshot`）**自动标记为预发布**，不会顶掉“Latest release”。
+
+> **ARM64 runner 限制**：`windows-11-arm` / `ubuntu-24.04-arm` 这组标准 ARM64 runner
+> **只对公共仓库免费可用**，私有仓库上会直接失败。仓库若转为私有：把这两个 `os` 换回
+> `windows-latest` / `ubuntu-latest` 交叉构建 arm64（`dotnet publish -r win-arm64` /
+> `-r linux-arm64` 均可行），同时跳过「校验发布产物能启动」两步——x64 runner 执行不了 ARM64
+> 产物；或用付费的 arm64 larger runner。
+>
+> **ARM64 产物未实机验证**：ARM64 runner 上只跑冒烟测试与 `--selftest`（合成数据），没有在真实
+> ARM 设备/真实游戏上验证（见 §9）。发布时不要把 ARM64 包写成「已验证」。
 
 注意：
 

@@ -8,6 +8,8 @@ bin/
 obj/
 dist/
 .dotnet/
+.dotnet-cli-home/
+.dotnet-install.sh
 .nuget/
 *.user
 

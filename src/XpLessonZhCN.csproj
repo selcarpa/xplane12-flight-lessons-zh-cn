@@ -13,7 +13,7 @@
     <AssemblyTitle>X-Plane 12 飞行教学汉化</AssemblyTitle>
     <Product>X-Plane 12 飞行教学汉化</Product>
     <Company>selcarpa</Company>
-    <Description>给 X-Plane 12「飞行教学」打中文字幕与课程标题补丁（支持 Windows 与 Linux/Wine）</Description>
+    <Description>给 X-Plane 12「飞行教学」打中文字幕与课程标题补丁（支持 Windows 与 Linux：Wine/Proton 及 Linux 原生版，自动检测可执行文件类型）</Description>
     <Copyright>MIT License</Copyright>
     <InvariantGlobalization>false</InvariantGlobalization>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
@@ -23,7 +23,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="..\translations\zh.tsv" LogicalName="translations.zh.tsv" />
+    <EmbeddedResource Include="..\translations\zh.csv" LogicalName="translations.zh.csv" />
     <EmbeddedResource Include="..\compat\known-versions.json" LogicalName="compat.known-versions.json" />
   </ItemGroup>
 

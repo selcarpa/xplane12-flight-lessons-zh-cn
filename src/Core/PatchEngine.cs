@@ -41,7 +41,7 @@ public static class PatchEngine
         int pos = start;
         while (true)
         {
-            int hit = PeImage.IndexOf(blob, needle, pos, end);
+            int hit = LessonImage.IndexOf(blob, needle, pos, end);
             if (hit < 0) break;
 
             if (hit == 0 || blob[hit - 1] == 0) found.Add(hit);
@@ -67,7 +67,7 @@ public static class PatchEngine
             if (blob[offset + i] != english[i]) return (PatchStatus.Skipped, "原文不匹配", 0);
         }
 
-        var span = PeImage.SafeSpanOf(blob, offset, english.Length);
+        var span = LessonImage.SafeSpanOf(blob, offset, english.Length);
         if (span is null) return (PatchStatus.Skipped, "不是独立的字符串（可能是更长文本的前缀）", 0);
 
         int avail = span.Value;
@@ -90,8 +90,9 @@ public static class PatchEngine
         return (PatchStatus.Patched, $"{english.Length} -> {chinese.Length} 字节", stop);
     }
 
-    /// <summary>按译文表顺序打补丁；blob 原地修改，返回逐条结果与改动区间。</summary>
-    public static EngineResult Apply(byte[] blob, PeImage image, IReadOnlyList<Translation> translations)
+    /// <summary>按译文表顺序打补丁；blob 原地修改，返回逐条结果与改动区间。
+    /// Windows 与 Linux 原生版使用同一条译文；放不下时按 too-long 拒绝（不写盘），绝不溢出。</summary>
+    public static EngineResult Apply(byte[] blob, LessonImage image, IReadOnlyList<Translation> translations)
     {
         var result = new EngineResult();
 

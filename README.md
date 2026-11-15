@@ -3,7 +3,8 @@
 给 **X-Plane 12 的「飞行教学」（Flight Lessons，Austin 的飞行小课堂）** 汉化**课程标题**与**口播字幕**。
 
 - 图形界面，**不需要安装任何运行环境**，解压双击即用
-- 支持 **Windows** 与 **Linux（Steam / Proton / Wine）**
+- 支持 **Windows** 与 **Linux（Steam / Proton / Wine，以及 Linux 原生版）**，x64 与 ARM64 都有包（ARM64 未经实机测试）
+- **自动检测可执行文件类型**：Windows 版 `X-Plane.exe`（PE）或 Linux 原生版 `X-Plane-x86_64`（ELF），选哪个都能打
 - 自动备份原版、打完自动校验、失败自动回滚，**不改变游戏文件大小、不动代码段**
 
 > Austin 的录音仍是英文；本工具汉化的是**字幕**和**课程标题**。
@@ -14,22 +15,52 @@
 
 ## 一、下载与使用
 
+### 先按 CPU 架构选包
+
+| 你的系统 | 下载 |
+|---|---|
+| Windows x64（绝大多数 Intel / AMD 电脑） | `XPlane12-FlightLessons-zh-CN-win-x64.zip` |
+| Windows ARM64（骁龙 X 等 ARM 笔记本） | `XPlane12-FlightLessons-zh-CN-win-arm64.zip` ⚠️ 未经实机测试 |
+| Linux x64（常见发行版、Steam Deck） | `XPlane12-FlightLessons-zh-CN-linux-x64.tar.gz` |
+| Linux ARM64（ARMv8-A / arm64-v8a） | `XPlane12-FlightLessons-zh-CN-linux-arm64.tar.gz` ⚠️ 未经实机测试 |
+
+> 不确定就选 x64：绝大多数电脑都是 x64。ARM64 包只在 ARM 系统上使用；
+> X-Plane 12 游戏本体仍是 x64（Windows on ARM 下由系统模拟运行）。
+
+> ⚠️ **ARM64 包未经实机测试（实验性）**：作者没有 Windows on ARM / ARM64 Linux 硬件，
+> `win-arm64` / `linux-arm64` 只通过 CI 的冒烟测试与 `--selftest`（合成数据），没有在真实
+> ARM 设备上运行过，也没有对真实游戏目录打过补丁。在 ARM 设备上使用前请先备份原版，
+> 建议先用「预演（不写盘）」/ `--dry-run` 确认；遇到问题欢迎反馈。
+
 ### Windows
 
-1. 下载 `XPlane12-FlightLessons-zh-CN-win-x64.zip`，解压到任意目录（例如 `D:\Tools\XP12汉化`）
+1. 下载上表里对应你系统的 zip，解压到任意目录（例如 `D:\Tools\XP12汉化`）
 2. **完全退出 X-Plane 12**，双击 `XPlane12-FlightLessons-zh-CN.exe`
 3. 程序会自动找到游戏目录；没找到就点「浏览…」选到游戏根目录（含 `X-Plane.exe` 的那一层）
 4. 点「打补丁」→ 确认 → 看到「补丁完成并通过校验」即可启动游戏
 
 > 解压后 `exe` 与 3 个 `.dll` 要放在同一目录，不要把 exe 单独拷走。
 
-### Linux（Steam / Proton）
+### Linux（Steam / Proton 与 Linux 原生版）
 
 ```bash
-tar xzf XPlane12-FlightLessons-zh-CN-linux-x64.tar.gz -C ~/apps/xpzhcn
+# 按你的架构二选一：
+tar xzf XPlane12-FlightLessons-zh-CN-linux-x64.tar.gz -C ~/apps/xpzhcn   # x64
+# tar xzf XPlane12-FlightLessons-zh-CN-linux-arm64.tar.gz -C ~/apps/xpzhcn  # ARM64（ARMv8-A / arm64-v8a）
+
 chmod +x ~/apps/xpzhcn/XPlane12-FlightLessons-zh-CN
 ~/apps/xpzhcn/XPlane12-FlightLessons-zh-CN
 ```
+
+程序会自动检测游戏目录里的可执行文件类型：
+
+- **Linux 原生版**：Steam 默认安装的 `X-Plane-x86_64`（ELF）→ 直接打补丁；
+- **Steam / Proton / Wine**：游戏目录里的 `X-Plane.exe`（PE）→ 与 Windows 版完全相同的补丁逻辑；
+- 两者都在时优先原生版（Linux 上）；备份按文件名分开存放，互不混用。
+
+> Windows 与 Linux 原生版**共用同一份译文表**（`translations/zh.csv`，CSV 维护）：
+> 每个词条只有一条译文，两个平台显示一致；每条还记录了允许写入的字节上限（`budget_bytes`），
+> Linux 原生版字符串紧凑，超限的译文会被拒绝并提示。
 
 游戏目录通常是 `~/.steam/steam/steamapps/common/X-Plane 12`（或你 Steam 库里对应的位置），
 程序会自动在常见位置里找，也可以手动「浏览…」选择。
@@ -83,13 +114,16 @@ chmod +x ~/apps/xpzhcn/XPlane12-FlightLessons-zh-CN
 
 | 项目 | 当前支持 |
 |---|---|
-| X-Plane 12 | **12.4.3-r2 (build 124311)** —— 唯一验证版本 |
-| 原版 exe sha256 | `2ca099b7c6b218e78d02bdbe298be2aebf670b67c5adff827449b065e1107936` |
-| 打完补丁 sha256 | `36f5b21eb869e94e75a71de0aa7a4235976e16677424ad5421a45ac6b367131e` |
-| exe 大小 | 91,132,488 字节（打补丁前后不变） |
-| Windows | Windows 10 1809+ / 11（自包含，无需装 .NET） |
-| Linux | 桌面发行版 + Steam/Proton，或 SteamOS 桌面模式 |
-| Linux 原生版 X-Plane | **暂不支持**（原生版不是 `X-Plane.exe`），后续计划 |
+| X-Plane 12 | **12.4.3-r2 (build 124311)** —— 唯一验证版本（Windows PE 与 Linux 原生 ELF 各一条） |
+| Windows 版 `X-Plane.exe` sha256 | `2ca099b7c6b218e78d02bdbe298be2aebf670b67c5adff827449b065e1107936` |
+| Windows 版打完补丁 sha256 | `d021f2656852416686e9f9c6222db90111ef791eea7967c839ade03e2e7efdbb` |
+| Windows 版 exe 大小 | 91,132,488 字节（打补丁前后不变） |
+| Linux 原生版 `X-Plane-x86_64` sha256 | `0fe6bc5c5d661633840bc5eba0de88d8def190f1ff40f6a7011d9252cc63eabb` |
+| Linux 原生版打完补丁 sha256 | `52218d9089e491f496bf96701989ab5b0a83eb76061086b21e0b9d786b88480e` |
+| Linux 原生版 exe 大小 | 76,056,352 字节（打补丁前后不变） |
+| Windows | Windows 10 1809+ / 11，x64 与 ARM64（自包含，无需装 .NET） |
+| Linux | 桌面发行版 + Steam/Proton，或 SteamOS 桌面模式；**Linux 原生版直接支持**；提供 x64 与 ARM64 包 |
+| ARM64（Windows on ARM / ARM64 Linux） | ⚠️ 提供 `win-arm64` / `linux-arm64` 包，但**未经实机测试**（作者无 ARM 硬件，见上文说明） |
 
 兼容信息全部记录在 [`compat/known-versions.json`](compat/known-versions.json)。
 游戏更新后如果要支持新版本，改这个清单即可（见 [AGENT.md](AGENT.md)）。
@@ -107,8 +141,9 @@ Linux 上程序不会自动提权，按弹窗里给出的 `sudo ...` 命令重�
 **Q：打完补丁进游戏还是英文？**
 1. 确认程序提示「补丁完成并通过校验」；
 2. 完全退出游戏再进（X-Plane 会缓存，需要重启）；
-3. Steam 校验/更新会覆盖 exe，重新打一次即可；
-4. 字幕只在「飞行教学」里，不在普通自由飞行里。
+3. Steam 校验/更新会覆盖可执行文件，重新打一次即可；
+4. 字幕只在「飞行教学」里，不在普通自由飞行里；
+5. 确认打的是当前用的那个版本：Linux 原生版打 `X-Plane-x86_64`，Windows/Proton 打 `X-Plane.exe`（程序会自动识别）。
 
 **Q：中文显示成方块 / 乱码？**
 程序会检查游戏自带的 `Resources/fonts/NotoSansCJK-SC-Regular.otf`。如果提示字体缺失或损坏，
@@ -142,7 +177,8 @@ Linux 上程序不会自动提权，按弹窗里给出的 `sudo ...` 命令重�
 | Flatpak | `~/.var/app/com.valvesoftware.Steam/.local/share/Steam/steamapps/common/X-Plane 12` |
 | Snap | `~/snap/steam/common/.local/share/Steam/steamapps/common/X-Plane 12` |
 
-程序会自动解析 `libraryfolders.vdf` 找所有 Steam 库。
+程序会自动解析 `libraryfolders.vdf` 找所有 Steam 库；Linux 原生版对应的可执行文件是
+`X-Plane-x86_64`（也可能叫 `X-Plane`），Windows/Proton 用的是 `X-Plane.exe`。
 
 ---
 
@@ -183,7 +219,8 @@ XPlane12-FlightLessons-zh-CN --path "/path/to/X-Plane 12" --check
 ./build.sh
 ```
 
-产物在 `dist/`。CI（GitHub Actions）会在 Windows 与 Linux 上分别构建并跑冒烟测试，见
+产物在 `dist/`。CI（GitHub Actions）会在四个原生 runner 上分别构建并跑冒烟测试
+（`win-x64` / `win-arm64` / `linux-x64` / `linux-arm64`），见
 [`.github/workflows/build.yml`](.github/workflows/build.yml)。
 
 ---
@@ -192,13 +229,14 @@ XPlane12-FlightLessons-zh-CN --path "/path/to/X-Plane 12" --check
 
 ```
 ├─ src/                          主程序（C# / Avalonia，单一代码库出 Windows + Linux）
-│  ├─ Core/                      字节级补丁逻辑（平台无关）
-│  ├─ Platform/                  平台差异：定位、写入、进程、字体
+│  ├─ Core/                      字节级补丁逻辑（平台无关，PE/ELF 通用）
+│  ├─ Platform/                  平台差异：定位、类型检测、写入、进程、字体
 │  ├─ Service/                   高层用例（分析 / 打补丁 / 校验 / 还原）——GUI 与 CLI 共用
 │  ├─ Cli/                       命令行模式、自检
 │  └─ Gui/                       Avalonia 图形界面
-├─ translations/zh.tsv           译文表（构建时嵌入 exe，exe 旁同名文件可覆盖）
-├─ compat/known-versions.json    兼容清单（sha256 → 版本信息）
+├─ translations/zh.csv           译文表（Windows 与 Linux 原生版共用，构建时嵌入 exe；
+│                                列：english, chinese, budget_bytes 字节上限）
+├─ compat/known-versions.json    兼容清单（sha256 → 版本信息，Windows 与 Linux 各一条）
 ├─ tests/SmokeTests/             冒烟测试（核心逻辑 + GUI headless）
 ├─ PLAN.md                         方案与设计决策
 └─ AGENT.md                      维护者须知：已验证事实、设计约束、踩过的坑

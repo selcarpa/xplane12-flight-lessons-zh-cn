@@ -163,14 +163,18 @@ public static class CommandLine
         }
 
         Console.WriteLine($"游戏目录 : {analysis.GameDir}");
-        Console.WriteLine($"exe      : {analysis.ExePath}  ({analysis.ExeSize:N0} 字节)");
+        Console.WriteLine($"可执行文件: {analysis.ExePath}  ({analysis.ExeSize:N0} 字节)");
+        Console.WriteLine($"类型     : {analysis.KindText}");
         Console.WriteLine($"sha256   : {analysis.Sha256}");
         Console.WriteLine($"版本     : {analysis.VersionText}");
         Console.WriteLine($"文本区间 : {analysis.RegionStart} .. {analysis.RegionEnd}（候选 {analysis.Candidates} 条）");
         Console.WriteLine($"词条总数 : {analysis.Entries}");
         Console.WriteLine($"已应用   : {analysis.Applied}");
         Console.WriteLine($"待应用   : {analysis.Pending}（exe 里还是英文）");
-        Console.WriteLine($"缺失     : {analysis.Missing}");
+        if (analysis.NotApplicable > 0)
+        {
+            Console.WriteLine($"不适用   : {analysis.NotApplicable}（本平台二进制里没有这些词条，正常现象）");
+        }
         Console.WriteLine($"字体     : {(analysis.Font.Ok ? "自带中文字体正常" : "⚠ " + analysis.Font.Detail)}");
         if (!analysis.Font.Ok)
         {
@@ -188,7 +192,8 @@ public static class CommandLine
             Console.WriteLine("注意     : 这个 exe 版本未在兼容清单中，打补丁需要二次确认（--force）。");
         }
 
-        return analysis.Missing == 0 ? ExitOk : ExitRecoverable;
+        // 词条「本平台不存在」属于正常平台差异（NotApplicable），不算失败
+        return ExitOk;
     }
 
     private static int RunDryRun(PatchService service)
@@ -314,7 +319,7 @@ public static class CommandLine
     {
         string version = AppVersion.Display;
         Console.WriteLine($"X-Plane 12 飞行教学汉化 v{version}");
-        Console.WriteLine("支持平台：Windows / Linux(Wine/Proton)");
+        Console.WriteLine("支持平台：Windows / Linux（Wine/Proton 与 Linux 原生版，自动检测可执行文件类型）");
     }
 
     private static void PrintHelp()

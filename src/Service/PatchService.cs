@@ -26,11 +26,22 @@ public sealed class Analysis
     public int Entries { get; set; }
     public int Pending { get; set; }
     public int Applied { get; set; }
-    public int Missing { get; set; }
+
+    /// <summary>英文原文在本平台二进制中不存在（或非独立字符串），本平台用不上这条词条。
+    /// 例如 Linux 原生版没有 Windows 版的部分词条。</summary>
+    public int NotApplicable { get; set; }
     public bool GameRunning { get; set; }
     public string GameRunningDetail { get; set; } = "";
     public FontProbeResult Font { get; set; } = new();
     public bool WorkDirWritable { get; set; }
+
+    /// <summary>检测到的可执行文件类型（Windows PE / Linux 原生 ELF）。</summary>
+    public ExecutableKind Kind { get; set; } = ExecutableKind.Pe;
+
+    public string ExeName => Path.GetFileName(ExePath);
+
+    /// <summary>面向用户的类型描述，如「Windows PE（X-Plane.exe）」。</summary>
+    public string KindText => ImageFormat.KindLabel(Kind, ExeName);
 
     /// <summary>游戏目录（也就是 exe 所在目录）是否可写。</summary>
     public bool GameDirWritable { get; set; }
@@ -106,16 +117,25 @@ public sealed class PatchService
     public PatchService(string gameDir)
     {
         GameDir = Path.GetFullPath(gameDir);
-        ExePath = Path.Combine(GameDir, GameLocator.ExeName);
+        Executable = GameExecutableResolver.Resolve(GameDir);
+        ExePath = Executable is null
+            ? Path.Combine(GameDir, GameExecutableResolver.CandidateNames[0])
+            : Path.Combine(GameDir, Executable.FileName);
     }
 
     public string GameDir { get; }
+    public GameExecutable? Executable { get; }
     public string ExePath { get; }
     public Action<string>? Log { get; set; }
 
-    private static string TranslationsPath => Path.Combine(AppContext.BaseDirectory, "translations", "zh.tsv");
+    /// <summary>当前目标可执行文件的类型（目录里没有可执行文件时按 PE 处理，Analyze 会先报错）。</summary>
+    public ExecutableKind Kind => Executable?.Kind ?? ExecutableKind.Pe;
+
+    private static string TranslationsPath => Path.Combine(AppContext.BaseDirectory, "translations", "zh.csv");
+
     private static string ManifestPath => Path.Combine(AppContext.BaseDirectory, "compat", "known-versions.json");
 
+    /// <summary>Windows 与 Linux 原生版共用同一张译文表（单一译文 + 每条字节上限）。</summary>
     public List<Translation> LoadTranslations() => new(Translations.Load(TranslationsPath, Log));
 
     public CompatManifest LoadManifest() => CompatManifest.Load(ManifestPath, Log);
@@ -131,7 +151,7 @@ public sealed class PatchService
 
         if (!File.Exists(ExePath))
         {
-            analysis.FatalError = $"游戏目录下没有 {GameLocator.ExeName}：{ExePath}";
+            analysis.FatalError = $"游戏目录下没有 X-Plane 可执行文件（{string.Join(" / ", GameExecutableResolver.CandidateNames)}）：{ExePath}";
             return analysis;
         }
 
@@ -141,6 +161,7 @@ public sealed class PatchService
 
         byte[] blob = File.ReadAllBytes(ExePath);
         analysis.Sha256 = Hashes.Sha256(blob);
+        analysis.Kind = ImageFormat.Detect(blob) ?? ExecutableKind.Pe;
 
         var manifest = LoadManifest();
         analysis.Known = manifest.FindByOriginal(analysis.Sha256);
@@ -152,7 +173,7 @@ public sealed class PatchService
         analysis.TranslationList = LoadTranslations();
         analysis.Entries = analysis.TranslationList.Count;
 
-        var image = new PeImage(blob);
+        var image = new LessonImage(blob);
         try
         {
             image.LocateRegion();
@@ -174,13 +195,14 @@ public sealed class PatchService
                 {
                     analysis.Pending++;
                 }
-                else if (PeImage.IndexOf(blob, chinese, image.RegionStart, image.RegionEnd) >= 0)
+                else if (LessonImage.IndexOf(blob, chinese, image.RegionStart, image.RegionEnd) >= 0)
                 {
                     analysis.Applied++;
                 }
                 else
                 {
-                    analysis.Missing++;
+                    // 英文不存在于本平台二进制（或只是长句前缀，非独立字符串）→ 本平台用不上
+                    analysis.NotApplicable++;
                 }
             }
         }
@@ -205,7 +227,7 @@ public sealed class PatchService
         analysis.GameDirWritable = PathPolicy.IsWritable(GameDir, out string? gameDirError);
         if (!analysis.GameDirWritable)
         {
-            Log?.Invoke($"游戏目录不可写（{gameDirError}）：需要以管理员身份运行才能替换 X-Plane.exe。");
+            Log?.Invoke($"游戏目录不可写（{gameDirError}）：需要以管理员身份运行才能替换 {analysis.ExeName}。");
         }
 
         analysis.NeedsElevationGain = !Elevation.IsElevated &&
@@ -233,7 +255,7 @@ public sealed class PatchService
             {
                 Status = ApplyStatus.NeedsPermission,
                 Message = $"没有写入游戏目录的权限：\n{GameDir}\n（{writeError}）\n\n" +
-                          "需要以管理员身份运行本工具，才能替换 X-Plane.exe。",
+                          $"需要以管理员身份运行本工具，才能替换 {Path.GetFileName(ExePath)}。",
             };
         }
 
@@ -269,7 +291,7 @@ public sealed class PatchService
             };
         }
 
-        var image = new PeImage(original);
+        var image = new LessonImage(original);
         try
         {
             image.LocateRegion();
@@ -336,7 +358,8 @@ public sealed class PatchService
         }
 
         string backupDir = PathPolicy.EnsureDir(PathPolicy.BackupDir);
-        string backupPath = Path.Combine(backupDir, $"{GameLocator.ExeName}.{originalSha[..12]}.bak");
+        string exeName = Path.GetFileName(ExePath);
+        string backupPath = Path.Combine(backupDir, $"{exeName}.{originalSha[..12]}.bak");
         if (!File.Exists(backupPath))
         {
             try
@@ -352,7 +375,7 @@ public sealed class PatchService
                     Status = permission ? ApplyStatus.NeedsPermission : ApplyStatus.Failed,
                     Message = permission
                         ? $"没有权限写入备份文件：\n{backupPath}\n（{ex.Message}）\n\n" +
-                          "需要以管理员身份运行本工具，才能备份并替换 X-Plane.exe。"
+                          $"需要以管理员身份运行本工具，才能备份并替换 {exeName}。"
                         : $"备份原版 exe 失败，已中止（未改动游戏）：{ex.Message}",
                     Engine = engine,
                 };
@@ -373,7 +396,7 @@ public sealed class PatchService
             {
                 Status = ApplyStatus.NeedsPermission,
                 Message = $"没有权限写入游戏目录：\n{Path.GetDirectoryName(ExePath)}\n\n{ex.Message}\n\n" +
-                          "需要以管理员身份运行本工具，才能替换 X-Plane.exe。",
+                          $"需要以管理员身份运行本工具，才能替换 {Path.GetFileName(ExePath)}。",
                 Engine = engine,
             };
         }
@@ -425,7 +448,7 @@ public sealed class PatchService
         }
 
         byte[] original = File.ReadAllBytes(ExePath);
-        var image = new PeImage(original);
+        var image = new LessonImage(original);
         try
         {
             image.LocateRegion();
@@ -486,14 +509,18 @@ public sealed class PatchService
         string dir = PathPolicy.BackupDir;
         if (!Directory.Exists(dir)) return list;
 
+        string exeName = Path.GetFileName(ExePath);
         try
         {
-            foreach (string file in Directory.EnumerateFiles(dir, GameLocator.ExeName + ".*.bak"))
+            foreach (string file in Directory.EnumerateFiles(dir, "*.bak"))
             {
                 var info = new FileInfo(file);
                 string name = info.Name;
-                string prefix = name.Length > GameLocator.ExeName.Length + 1
-                    ? name[(GameLocator.ExeName.Length + 1)..].Split('.')[0]
+                // 只列出当前可执行文件的备份（Windows 版与 Linux 原生版的备份互不混用）
+                if (!name.StartsWith(exeName + ".", StringComparison.OrdinalIgnoreCase)) continue;
+
+                string prefix = name.Length > exeName.Length + 1
+                    ? name[(exeName.Length + 1)..].Split('.')[0]
                     : "";
                 list.Add(new BackupInfo
                 {
@@ -629,7 +656,7 @@ public sealed class PatchService
             int pos = 0;
             while (true)
             {
-                int hit = PeImage.IndexOf(blob, chinese, pos, blob.Length);
+                int hit = LessonImage.IndexOf(blob, chinese, pos, blob.Length);
                 if (hit < 0) break;
 
                 if (hit == 0 || blob[hit - 1] == 0)

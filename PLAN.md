@@ -17,7 +17,11 @@
 | G5 | 跨平台行为一致 | Windows 与 Linux 产物在同一个 exe 副本上产出**逐字节相同**的结果 |
 
 ### 非目标（本版不做）
-- **Linux 原生版 X-Plane**（ELF 二进制）暂不支持；架构预留 `IBinaryImage` 扩展点，将来加 `ElfImage` 不改上层。
+- ~~**Linux 原生版 X-Plane**（ELF 二进制）暂不支持~~ → **已支持**（2026-11-15 落地）：同一套字节逻辑
+  直接复用，`Core/ImageFormat.cs` 按魔数自动检测 PE/ELF。**Windows 与 Linux 原生版共用同一张
+  译文表** `translations/zh.csv`（513 条，CSV：`english,chinese,budget_bytes`，单一译文 + 每条
+  字节上限），两平台显示一致；金标准 Windows `d021f265…`、Linux `52218d90…`。
+  补丁引擎本身没有任何格式分支。
 - **macOS** 不做，但技术栈天然支持，留待后续。
 - **Wine 字体自动安装**：只做检测与提示，绝不修改 Proton prefix 或系统字体（已确认决定）。
 - 课程音频（Austin 的英文录音）不处理；只汉化字幕与课程标题。
@@ -37,12 +41,12 @@
 | 原版 sha256 | `2ca099b7c6b218e78d02bdbe298be2aebf670b67c5adff827449b065e1107936` |
 | 教学文本区间 | `41,552,520 .. 41,612,728` |
 | 区间内候选字符串 | **621** 条 |
-| 现有译文条数 | **513**（8 课程标题 + 505 口播字幕） |
-| 打完补丁后 sha256 | `36f5b21eb869e94e75a71de0aa7a4235976e16677424ad5421a45ac6b367131e` |
+| 现有译文条数 | **513**（8 课程标题 + 505 口播字幕；Windows/Linux 共用同一张 CSV，单一译文） |
+| 打完补丁后 sha256 | `d021f2656852416686e9f9c6222db90111ef791eea7967c839ade03e2e7efdbb` |
 | 补丁统计 | patched 513 / skipped 8（前缀重叠）/ too-long 0 / not-found 0 |
 | 文件结构 | 大小、PE 头 `[:0x400]`、文件尾 `[-0x1000:]` 均不变 |
 
-> 🎯 上面两个哈希是**跨平台一致性的金标准**：任何实现（Win/Linux）在 exe 副本上打完补丁都必须得到 `36f5b21e…`。
+> 🎯 上面两个哈希是**跨平台一致性的金标准**：任何实现（Win/Linux）在 exe 副本上打完补丁都必须得到 `d021f265…`。
 
 ### 2.2 Wine / Proton 场景
 
@@ -134,7 +138,7 @@ xplane12-flight-lessons-zh-cn/
 │  │  ├─ ViewModels/               MVVM（CommunityToolkit 或手写 INotifyPropertyChanged）
 │  │  └─ Assets/                   图标、内嵌字体
 │  └─ Cli/Commands.cs              --selftest/--check/--apply/--verify/--restore…
-├─ translations/zh.tsv             ★ 唯一译文本体（构建时嵌入，exe 旁可覆盖）
+├─ translations/zh.csv             ★ 唯一译文本体（CSV，构建时嵌入，exe 旁可覆盖）
 ├─ tests/
 │  ├─ selftest 用例（合成缓冲区）
 │  └─ fixtures/sample.bin          小体积 PE 结构样本（CI 用，不含 91MB 游戏文件）
@@ -179,7 +183,7 @@ region_end   = index(END_ANCHOR, 从 START_ANCHOR 之后找)
 2. `[:0x400]`（PE 头）不变
 3. `[-0x1000:]`（文件尾）不变
 4. 所有差异字节 ⊆ 声明过的补丁 span 并集
-5. 补丁后 sha256（对已知版本）= `36f5b21e…`
+5. 补丁后 sha256（对已知版本）= `d021f265…`
 
 > 任何一条不成立 → 视为失败，GUI 自动从备份回滚。
 
@@ -200,15 +204,18 @@ region_end   = index(END_ANCHOR, 从 START_ANCHOR 之后找)
 
 **Linux 候选**：`$XP12_ROOT` → `~/.steam/steam/steamapps/libraryfolders.vdf` → `~/.local/share/Steam/...` → Flatpak `~/.var/app/com.valvesoftware.Steam/.local/share/Steam/...` → Snap `~/snap/steam/common/.local/share/Steam/...` → 各库里 `steamapps/common/X-Plane 12` → 记住上次路径（同 `.zh_cn_translate/settings.json`），**大小写兜底**：精确找不到时列目录做忽略大小写匹配。
 
-判定「是游戏目录」的依据：目录下存在 `X-Plane.exe`（精确名）。
+判定「是游戏目录」的依据：目录下存在 X-Plane 可执行文件——`X-Plane.exe`（PE）或
+`X-Plane-x86_64` / `X-Plane`（Linux 原生 ELF）。**可执行文件解析**（`Platform/GameExecutable.cs`）：
+按平台候选顺序找存在的文件，读魔数（MZ/ELF）自动判定类型；Linux 上原生版优先。
 
 ### 6.3 `ProcessProbe`
-Windows：`Process.GetProcessesByName("X-Plane")`。Linux：扫描 `/proc/*/comm`、`/proc/*/exe` 链接名匹配 `X-Plane.exe|wineserver|wine64-preloader|proton`。检测到游戏在跑 → **禁止打补丁**（仍允许检查/预演）。
+Windows：`Process.GetProcessesByName("X-Plane")`。Linux：扫描 `/proc/*/comm`、`/proc/*/exe` 链接名匹配 `X-Plane`（覆盖 `X-Plane.exe` 与 `X-Plane-x86_64`）`|wineserver|wine64-preloader|proton`。检测到游戏在跑 → **禁止打补丁**（仍允许检查/预演）。
 
 ### 6.4 `PathPolicy`
 - 工作目录：**程序目录**下的 `.zh_cn_translate/`（`backup/` + `data/` + `log.txt` + `settings.json`）
   → 实施时按用户要求从「游戏目录下」改到「程序目录下」（便携、不污染游戏目录）
-- 备份命名：`X-Plane.exe.<sha256前12位>.bak`
+- 备份命名：`<可执行文件名>.<sha256前12位>.bak`（如 `X-Plane.exe.2ca099b7c6b2.bak`、
+  `X-Plane-x86_64.0fe6bc5c5d66.bak`）；备份列表按当前可执行文件名过滤，两种版本互不混用。
 
 ---
 
@@ -247,7 +254,7 @@ Windows：`Process.GetProcessesByName("X-Plane")`。Linux：扫描 `/proc/*/comm
 │           ✓ 已识别 X-Plane 12.4.3 · 91,132,488 字节 · 未打补丁 │
 │           ⚠ 字体检查通过（自带思源黑体）                        │
 ├──────────────────────────────────────────────────────────────┤
-│ 译文 513 条 ｜ 已应用 0 ｜ 待应用 513 ｜ 缺失 0 ｜ 放不下 0     │
+│ 译文 513 条 ｜ 已应用 0 ｜ 待应用 505 ｜ 不适用 8 ｜ 候选字符串 614 条 ｜ 备份 0 份 │
 ├──────────────────────────────────────────────────────────────┤
 │ [ 检查状态 ] [ 预演 ] [ 打补丁 ] [ 还原原版 ] [ 备份… ]        │
 │ ████████████████░░░░░░░░  62%   正在写入字幕 320/513           │
@@ -321,8 +328,8 @@ xpzhcn --version
 <InvariantGlobalization>false</InvariantGlobalization>   <!-- 需要中文区域/排序 -->
 <DebugType>none</DebugType>
 ```
-- `translations/zh.tsv` 与内嵌字体、图标通过 `<EmbeddedResource>` 打包
-- 运行时优先读 exe 同目录 `translations/zh.tsv`（存在则覆盖内嵌版，便于玩家自己修词条）
+- `translations/zh.csv` 与内嵌字体、图标通过 `<EmbeddedResource>` 打包
+- 运行时优先读 exe 同目录 `translations/zh.csv`（存在则覆盖内嵌版，便于玩家自己修词条）
 - 裁剪（`PublishTrimmed`）**先不开**：Avalonia 裁剪有反射风险，稳住体积换正确性；实测没问题再评估
 
 ### 10.2 产物
@@ -357,7 +364,7 @@ on: tag v* → 自动创建 Release 并附两个产物 + SHA256SUMS
 |---|---|---|
 | V1 单元 | `safe_span`/`patch_one`/`occurrences`/锚点兜底 | 全部边界用例（超长、前缀、重复、锚点缺失）通过 |
 | V2 自检 | `--selftest`（合成 4 KB 缓冲区，不读游戏文件） | 退出码 0，CI 双平台都跑 |
-| V3 金标准 | exe **副本**上完整打补丁 | sha256 == `36f5b21e…`，大小/头/尾不变 |
+| V3 金标准 | exe **副本**上完整打补丁 | sha256 == `d021f265…`，大小/头/尾不变 |
 | V4 跨平台 | Windows 产物 与 Linux 产物 对同一副本各打一次 | 两个输出**逐字节相同**（再比对哈希） |
 | V5 平台特性 | Linux `chmod 0755`、rename 原子性、跨卷回落；Windows 完整性标签绕过 | 手动 + 脚本各一次 |
 | V6 字体探测 | 删掉/截断 OTF 的副本上跑 `--font-check` | L1/L2 正确告警，且不阻塞 `--apply` |
@@ -428,7 +435,7 @@ on: tag v* → 自动创建 Release 并附两个产物 + SHA256SUMS
 | Windows 交付 | 单文件 exe | ⚠ **改为便携目录 + zip**：单文件 + 原生库自解压要求启动时写 `%TEMP%\.net`，受限系统直接失败且易被误判；现为 `exe + 3 个原生 dll` 后打 zip（**单文件变体已移除，不再提供**） |
 | Linux 交付 | tar.gz | ✅ tar.gz（含可执行位 0755） |
 | 体积 | 30–40 MB | Windows 便携包 **≈53 MB**（exe 39 MB + libSkiaSharp/av_libglesv2/libHarfBuzzSharp 合计 16.7 MB） |
-| 测试 | selftest + 金标准 | ✅ `tests/SmokeTests`（核心自检 + GUI headless 启动）；真 exe 副本端到端验证得到 `36f5b21e…` |
+| 测试 | selftest + 金标准 | ✅ `tests/SmokeTests`（核心自检 + GUI headless 启动）；真 exe 副本端到端验证得到 `d021f265…` |
 | 字体 | 检测 + 提示 | ✅ 已实现；实测游戏自带字体 22/22 抽样字形齐全 |
 
 新增的关键实现约定：**兼容清单** `compat/known-versions.json` + **未验证版本二次确认** +

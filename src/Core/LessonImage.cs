@@ -19,10 +19,11 @@ public sealed class StringEntry
 }
 
 /// <summary>
-/// 在 PE 里定位「飞行教学」文本区间，并读写其中的 C 字符串。
+/// 在可执行文件（Windows PE 或 Linux 原生 ELF）里定位「飞行教学」文本区间，
+/// 并读写其中的 C 字符串。定位逻辑只依赖字节内容（锚点字符串），与文件格式无关。
 /// 规则见 AGENT.md（锚点、区间、safe_span、长度只减不增）。
 /// </summary>
-public sealed class PeImage
+public sealed class LessonImage
 {
     public const int ScanBack = 4096;
     public const int ScanForward = 200_000;
@@ -35,7 +36,7 @@ public sealed class PeImage
 
     private static readonly UTF8Encoding StrictUtf8 = new(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
 
-    public PeImage(byte[] blob) => Blob = blob;
+    public LessonImage(byte[] blob) => Blob = blob;
 
     public byte[] Blob { get; }
     public int RegionStart { get; private set; }
@@ -67,7 +68,7 @@ public sealed class PeImage
                 if (captionHit < 0)
                 {
                     throw new PatchException(
-                        "找不到教学文本锚点：这个 exe 可能不是受支持的 X-Plane 12 版本，或已被修改过。");
+                        "找不到教学文本锚点：这个文件可能不是受支持的 X-Plane 12（Windows 或 Linux 原生版），或已被修改过。");
                 }
                 startHit = captionHit;
             }
@@ -137,12 +138,6 @@ public sealed class PeImage
             pos = after;
         }
     }
-
-    /// <summary>
-    /// 该字符串可用的内容字节数（不含结尾 NUL，含其后对齐填充）；
-    /// 不是独立 C 字符串（是更长文本的前缀）时返回 null。
-    /// </summary>
-    public int? SafeSpan(int offset, int length) => SafeSpanOf(Blob, offset, length);
 
     /// <summary>无状态版本，供补丁引擎直接使用。</summary>
     public static int? SafeSpanOf(byte[] blob, int offset, int length)
