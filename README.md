@@ -116,16 +116,16 @@ chmod +x ~/apps/xpzhcn/XPlane12-FlightLessons-zh-CN
 |---|---|
 | X-Plane 12 | **12.4.4-r2 (build 124419)** 与 **12.4.3-r2 (build 124311)**；Windows 版与 Linux 原生版均已支持 |
 | Windows 12.4.4 `X-Plane.exe` 原版 sha256 | `5b18cc7d406bdf22be20135849b8705622cef6882edbb6e8d7c54e095b712563` |
-| Windows 12.4.4 打完补丁 sha256 | `8b3e152150043b9f7e32ee520d895354e537fc5eb5c418aa39e0048b0ecfabb7` |
+| Windows 12.4.4 打完补丁 sha256 | `ae57d6197d44d0bcfa4cc1017c1caccc762338871a483745a965e18591b78a3b` |
 | Windows 12.4.4 exe 大小 | 55,022,152 字节（打补丁前后不变） |
 | Windows 12.4.3 原版 sha256 | `2ca099b7c6b218e78d02bdbe298be2aebf670b67c5adff827449b065e1107936` |
-| Windows 12.4.3 打完补丁 sha256 | `d021f2656852416686e9f9c6222db90111ef791eea7967c839ade03e2e7efdbb` |
+| Windows 12.4.3 打完补丁 sha256 | `deebc68ee5d3fe5adb33031a105d61d62c4554dd882b1bae88f7705fdc90ec5e` |
 | Windows 12.4.3 exe 大小 | 91,132,488 字节（打补丁前后不变） |
 | Linux 12.4.4 `X-Plane-x86_64` 原版 sha256 | `565ac3942e952794d5625e04b2147543f2fca2f027942f5f205d142e52728fce` |
-| Linux 12.4.4 打完补丁 sha256 | `8b29f772ce110ba9df92335de14f181be487faedb7ce8aa02acbfc11feca295f` |
+| Linux 12.4.4 打完补丁 sha256 | `257cdd957852f9065c8a2c1bf4e769198615189d081ac79c3e63adb4dbf632da` |
 | Linux 12.4.4 exe 大小 | 78,659,600 字节（打补丁前后不变） |
 | Linux 12.4.3 原版 sha256 | `0fe6bc5c5d661633840bc5eba0de88d8def190f1ff40f6a7011d9252cc63eabb` |
-| Linux 12.4.3 打完补丁 sha256 | `52218d9089e491f496bf96701989ab5b0a83eb76061086b21e0b9d786b88480e` |
+| Linux 12.4.3 打完补丁 sha256 | `b34e075c300ed61174fba79fe7ddab4d2bdb4756597715fd1f15726d1855a5c2` |
 | Linux 12.4.3 exe 大小 | 76,056,352 字节（打补丁前后不变） |
 | Windows | Windows 10 1809+ / 11，x64 与 ARM64（自包含，无需装 .NET） |
 | Linux | 桌面发行版 + Steam/Proton，或 SteamOS 桌面模式；**Linux 原生版直接支持**；提供 x64 与 ARM64 包 |

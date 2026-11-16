@@ -190,7 +190,8 @@ public sealed class PatchService
                 byte[] english = Encoding.UTF8.GetBytes(pair.English);
                 byte[] chinese = Encoding.UTF8.GetBytes(pair.Chinese);
 
-                bool hasEnglish = PatchEngine.Occurrences(blob, english, image.RegionStart, image.RegionEnd).Count > 0;
+                bool hasEnglish = PatchEngine.Occurrences(blob, english, image.RegionStart, image.RegionEnd).Count > 0
+                                  || PatchEngine.LenientOccurrences(blob, english, image.RegionStart, image.RegionEnd).Count > 0;
                 if (hasEnglish)
                 {
                     analysis.Pending++;
@@ -495,6 +496,9 @@ public sealed class PatchService
         byte[] original = File.ReadAllBytes(backup.Path);
         var translations = LoadTranslations();
         var spans = ComputeSpansFromTranslations(current, translations);
+        // 个别 Linux 构建里字幕句首带垃圾数据（没有 NUL 分隔），译文会写在「非字符串起点」处，
+        // 按中文反查会漏掉这些区间。这里再用原版 + 同一补丁引擎算一遍期望改动区间，取并集。
+        spans.AddRange(ComputeSpansFromOriginal(original, translations));
 
         var report = Verifier.Compare(original, current, spans);
         return new VerifyOutcome
@@ -651,6 +655,23 @@ public sealed class PatchService
         PatchStatus.Skipped => "skipped",
         _ => "not-found",
     };
+
+    /// <summary>用原版字节跑一遍补丁引擎，得到「这次应该改哪些区间」；定位失败时返回空表。</summary>
+    private static List<PatchSpan> ComputeSpansFromOriginal(byte[] original, IReadOnlyList<Translation> translations)
+    {
+        try
+        {
+            var image = new LessonImage(original);
+            image.LocateRegion();
+            var copy = (byte[])original.Clone();
+            var result = PatchEngine.Apply(copy, image, translations);
+            return new List<PatchSpan>(result.Spans);
+        }
+        catch (PatchException)
+        {
+            return new List<PatchSpan>();
+        }
+    }
 
     private static List<PatchSpan> ComputeSpansFromTranslations(byte[] blob, IReadOnlyList<Translation> translations)
     {

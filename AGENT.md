@@ -17,12 +17,12 @@ Windows 版（`X-Plane.exe`，PE）——**当前最新验证：12.4.4-r2**：
 | Steam AppID | **2014780** |
 | `X-Plane.exe` 大小 | **55,022,152** 字节（12.4.4 起体积比 12.4.3 的 91 MB 明显减小，教学文本内容未变） |
 | 原版 sha256 | `5b18cc7d406bdf22be20135849b8705622cef6882edbb6e8d7c54e095b712563` |
-| 打完补丁 sha256 | `8b3e152150043b9f7e32ee520d895354e537fc5eb5c418aa39e0048b0ecfabb7` |
+| 打完补丁 sha256 | `ae57d6197d44d0bcfa4cc1017c1caccc762338871a483745a965e18591b78a3b` |
 | 文本区间 | `42,825,408 .. 42,911,160`（同一对锚点，见 §4） |
 | 区间内候选字符串 | **582** 条（区间边界随编译布局变化，与 12.4.3 的 621 条不可直接比较） |
 | 译文条数 | **513**（8 课程标题 + 505 口播字幕，与 12.4.3 相同） |
 | 补丁统计 | patched **513** / skipped **8**（前缀重叠）/ too-long **0** / not-found **0** |
-| 改动量 | **786 段 / 45,097 字节**（占文件 0.0820%；与 12.4.3 改动字节数相同，段数差 1 是 64KB 分块计段导致） |
+| 改动量 | **786 段 / 45,095 字节**（占文件 0.0820%；与 12.4.3 改动字节数相同，段数差 1 是 64KB 分块计段导致） |
 | 文件结构 | 大小、PE 头 `[:0x400]`、文件尾 `[-0x1000:]` 均不变 |
 
 Windows 版 12.4.3-r2（仍保留在兼容清单里，继续支持）：
@@ -32,11 +32,11 @@ Windows 版 12.4.3-r2（仍保留在兼容清单里，继续支持）：
 | 版本 | X-Plane **12.4.3-r2**，build **124311**，Intel 64-bit |
 | `X-Plane.exe` 大小 | **91,132,488** 字节 |
 | 原版 sha256 | `2ca099b7c6b218e78d02bdbe298be2aebf670b67c5adff827449b065e1107936` |
-| 打完补丁 sha256 | `d021f2656852416686e9f9c6222db90111ef791eea7967c839ade03e2e7efdbb` |
+| 打完补丁 sha256 | `deebc68ee5d3fe5adb33031a105d61d62c4554dd882b1bae88f7705fdc90ec5e` |
 | 文本区间 | `41,552,520 .. 41,612,728` |
 | 区间内候选字符串 | **621** 条 |
 | 补丁统计 | patched **513** / skipped **8** / too-long **0** / not-found **0** |
-| 改动量 | **785 段 / 45,097 字节**（占文件 0.0495%） |
+| 改动量 | **785 段 / 45,095 字节**（占文件 0.0495%） |
 | 文件结构 | 大小、PE 头 `[:0x400]`、文件尾 `[-0x1000:]` 均不变 |
 
 Linux 原生版（`X-Plane-x86_64`，ELF）——**当前最新验证：12.4.4-r2**：
@@ -46,12 +46,12 @@ Linux 原生版（`X-Plane-x86_64`，ELF）——**当前最新验证：12.4.4-r
 | 版本 | X-Plane **12.4.4-r2**，build **124419**（`Compiled on Nov  9 2026 16:27:21`） |
 | `X-Plane-x86_64` 大小 | **78,659,600** 字节 |
 | 原版 sha256 | `565ac3942e952794d5625e04b2147543f2fca2f027942f5f205d142e52728fce` |
-| 打完补丁 sha256 | `8b29f772ce110ba9df92335de14f181be487faedb7ce8aa02acbfc11feca295f` |
+| 打完补丁 sha256 | `257cdd957852f9065c8a2c1bf4e769198615189d081ac79c3e63adb4dbf632da` |
 | 文本区间 | `49,594,154 .. 49,647,601`（同一对锚点，字节搜索即可定位） |
 | 区间内候选字符串 | **649** 条 |
-| 译文条数 | **单一共用表 513 条**（两平台同一条译文；Linux 上 13 条词条不适用，见 §9） |
-| 补丁统计 | patched **499** / skipped **7** / too-long **0** / not-found **13**（见 §9） |
-| 改动量 | **771 段 / 44,475 字节**（占文件 0.0565%；连续改动区间 770 段，64KB 分块计段 +1） |
+| 译文条数 | **单一共用表 513 条**（两平台同一条译文；Linux 上 5 条句首带垃圾前缀由引擎兜底写入，9 条 not-found，见 §9） |
+| 补丁统计 | patched **504** / skipped **7** / too-long **0** / not-found **9**（见 §9） |
+| 改动量 | **776 段 / 44,820 字节**（占文件 0.0570%；连续改动区间 775 段，64KB 分块计段 +1） |
 | 文件结构 | 大小、ELF 头 `[:0x400]`、文件尾 `[-0x1000:]` 均不变 |
 
 Linux 原生版 12.4.3-r2（仍保留在兼容清单里，继续支持）：
@@ -61,16 +61,16 @@ Linux 原生版 12.4.3-r2（仍保留在兼容清单里，继续支持）：
 | 版本 | X-Plane **12.4.3-r2**，build **124311**（`Compiled on Jun 24 2026 15:40:13`） |
 | `X-Plane-x86_64` 大小 | **76,056,352** 字节 |
 | 原版 sha256 | `0fe6bc5c5d661633840bc5eba0de88d8def190f1ff40f6a7011d9252cc63eabb` |
-| 打完补丁 sha256 | `52218d9089e491f496bf96701989ab5b0a83eb76061086b21e0b9d786b88480e` |
+| 打完补丁 sha256 | `b34e075c300ed61174fba79fe7ddab4d2bdb4756597715fd1f15726d1855a5c2` |
 | 文本区间 | `47,827,431 .. 47,880,969` |
 | 区间内候选字符串 | **614** 条 |
-| 补丁统计 | patched **503** / skipped **7** / too-long **0** / not-found **9** |
-| 改动量 | **773 段 / 44,632 字节** |
+| 补丁统计 | patched **507** / skipped **7** / too-long **0** / not-found **6** |
+| 改动量 | **779 段 / 44,871 字节** |
 | 文件结构 | 大小、ELF 头 `[:0x400]`、文件尾 `[-0x1000:]` 均不变 |
 
 > 🎯 **金标准**：任何实现（Windows / Linux）在可执行文件副本上打完补丁都必须得到对应版本的
-> 补丁后 sha256：Windows 12.4.4 `8b3e1521…`、Windows 12.4.3 `d021f265…`、Linux 原生 12.4.4
-> `8b29f772…`、Linux 原生 12.4.3 `52218d90…`。C# 版已实测逐字节一致。
+> 补丁后 sha256：Windows 12.4.4 `ae57d619…`、Windows 12.4.3 `deebc68e…`、Linux 原生 12.4.4
+> `257cdd95…`、Linux 原生 12.4.3 `b34e075c…`。C# 版已实测逐字节一致。
 
 ### 1.2 字体（决定「Wine 下中文会不会变方块」）
 
@@ -99,6 +99,11 @@ X-Plane.exe 里引用了该文件名（NotoSansCJK-SC-Regular ×1、Resources/fo
 **注意：Windows 版与 Linux 原生版的口播字幕是同一套内容但不同编译版本**，文案有细微差异
 （例如 Linux 版个别句子带 `E`/`A`/`?` 前缀垃圾字符、`mrakes`/`ip` 等笔误），
 且 ELF 里字符串紧凑排列（字符串之间几乎没有填充空间，可用字节 = 英文字符串自身长度）。
+个别 Linux 构建里字幕串前面直接跟着浮点/结构体数据（没有 NUL 分隔），英文原文不在「字符串起点」，
+由 `PatchEngine.LenientOccurrences` 兜底识别（规则见 §4）——12.4.4 Linux 上这样救回了 5 条
+（含每节课第一句 `Hey there, it's Austin Meyer…` 和字幕 `Let's do a touch-n-go.`），
+12.4.3 Linux 上 4 条。同一词条可能既有「前缀长串命中」又有「数据前缀独立拷贝」，
+`Apply` 两边都会处理；`Let's do a touch-n-go.` 的独立拷贝只有 22 字节可用，译文也相应收紧。
 
 **统一译文表（设计决定）**：Windows 与 Linux 原生版**共用同一张** `translations/zh.csv`
 （标准 CSV，方便用表格软件维护），列：`english,chinese,budget_bytes`：
@@ -107,12 +112,15 @@ X-Plane.exe 里引用了该文件名（NotoSansCJK-SC-Regular ×1、Resources/fo
 - `budget_bytes` 是该词条允许写入的最大 UTF-8 字节数：取当前验证版本里**最紧的发生位置**
   （Windows 12.4.4 与 Linux 原生 12.4.3/12.4.4 取最紧）。ELF 字符串紧凑排列，
   部分长句的上限就是英文字符串自身长度，译文必须在限制内表达清楚；
-- 12.4.4 比旧版更紧的 4 条已收紧上限：`Evolution Cross-Country` 31→23、
+- 12.4.4 比旧版更紧的 7 条已收紧上限：`Evolution Cross-Country` 31→23、
   `OK so now you got a few of the X-Plane keys…` 128→127、`All right your airplane. I'm out.` 39→35
-  （Windows 12.4.4），`I'm gonna show you a YouTube video…` 71→67（Linux 12.4.4）；
+  （Windows 12.4.4），`I'm gonna show you a YouTube video…` 71→67、
+  `We're going to fly new maneuvers…` 111→110、`Let's get going. Gimme one notch of flaps.` 47→42
+  （Linux 12.4.4，含兜底写入的位置），`Let's do a touch-n-go.` 31→22（Linux 字幕独立拷贝，
+  译文同时从 24 字节改短为 21 字节「来个连续起降吧」）；
 - 自检会校验「每条中文 ≤ budget_bytes」，`--dry-run`/`--apply` 仍以实际二进制 safe_span 为准；
-- 好处：单文件维护、双平台显示一致；当前金标准 Windows 12.4.4 `8b3e1521…`、
-  Windows 12.4.3 `d021f265…`、Linux 原生 12.4.4 `8b29f772…`、Linux 原生 12.4.3 `52218d90…`。
+- 好处：单文件维护、双平台显示一致；当前金标准 Windows 12.4.4 `ae57d619…`、
+  Windows 12.4.3 `deebc68e…`、Linux 原生 12.4.4 `257cdd95…`、Linux 原生 12.4.3 `b34e075c…`。
 
 ---
 
@@ -130,7 +138,7 @@ X-Plane.exe 里引用了该文件名（NotoSansCJK-SC-Regular ×1、Resources/fo
   "status": "verified",
   "exeSize": 55022152,
   "sha256": "5b18cc7d406bdf22be20135849b8705622cef6882edbb6e8d7c54e095b712563",
-  "patchedSha256": "8b3e152150043b9f7e32ee520d895354e537fc5eb5c418aa39e0048b0ecfabb7",
+  "patchedSha256": "ae57d6197d44d0bcfa4cc1017c1caccc762338871a483745a965e18591b78a3b",
   "regionStart": 42825408, "regionEnd": 42911160,
   "candidates": 582, "entries": 513,
   "patchStats": { "patched": 513, "skipped": 8, "tooLong": 0, "notFound": 0 },
@@ -140,11 +148,11 @@ X-Plane.exe 里引用了该文件名（NotoSansCJK-SC-Regular ×1、Resources/fo
 ```
 
 Windows 12.4.3 条目字段含义相同（`exeSize` 91,132,488、`regionStart/End` 41,552,520/41,612,728、
-`candidates` 621、`patchedSha256` `d021f265…`）。Linux 原生版条目字段含义也相同：12.4.4
+`candidates` 621、`patchedSha256` `deebc68e…`）。Linux 原生版条目字段含义也相同：12.4.4
 （`exeSize` 78,659,600、`regionStart/End` 49,594,154/49,647,601、`candidates` 649、
-`patchedSha256` `8b29f772…`、`patchStats` { patched 499 / skipped 7 / tooLong 0 / notFound 13 }）、
+`patchedSha256` `257cdd95…`、`patchStats` { patched 504 / skipped 7 / tooLong 0 / notFound 9 }）、
 12.4.3（`exeSize` 76,056,352、`regionStart/End` 47,827,431/47,880,969、`candidates` 614、
-`patchStats` { patched 503 / skipped 7 / tooLong 0 / notFound 9 }），
+`patchStats` { patched 507 / skipped 7 / tooLong 0 / notFound 6 }），
 `platforms: ["linux-native"]`。清单同时被编译进 exe；exe 同目录的
 `compat/known-versions.json` 会覆盖内置版本。
 
@@ -187,7 +195,7 @@ src/
 ├─ Core/                 平台无关，纯字节逻辑
 │  ├─ LessonImage.cs     锚点定位、区间、字符串枚举、safe_span、只读字符串解析（PE/ELF 通用）
 │  ├─ ImageFormat.cs     可执行文件类型检测（魔数：MZ→PE，\x7FELF→ELF）
-│  ├─ PatchEngine.cs     occurrences + patch_one + 统计（返回改动区间）
+│  ├─ PatchEngine.cs     occurrences + patch_one + 句首垃圾前缀兜底 + 统计（返回改动区间）
 │  ├─ Verifier.cs        结构不变量 + 改动范围校验
 │  ├─ CompatManifest.cs  兼容清单模型 / 内置资源加载
 │  └─ Translations.cs    CSV 解析（单表 english,chinese,budget_bytes；标准 CSV 引号/转义）
@@ -236,6 +244,14 @@ tests/SmokeTests/        核心自检 + GUI headless 启动（CI 跑这个）
 3. **可用空间 = 到下一条字符串起点之间的字节数 − 1**（末尾保留 NUL）。`safe_span` 计算，
    放不下就报 `too-long`，**改短译文，不要做重定位**。
 4. **只认「字符串起点」**：匹配位置前一字节必须是 `0x00`，否则会把长字符串里的同名片段算进来。
+   > 唯一例外（兜底）：个别 Linux 构建里字幕串前直接跟着浮点/结构体数据（无 NUL 分隔）或 1~4 字节残字，
+   > 英文原文不在字符串起点。`PatchEngine.LenientOccurrences` 只在英文**正好结束在 NUL**、且前缀是
+   > 「非法 UTF-8/控制字节数据」或「≤4 字节且不以空格结尾的残字」时才承认它是独立字幕：
+   > 从英文原文处写入、保留前缀字节不动。文本前缀（`That `、`…and then: Brakes off!`）一律不兜底，
+   > 因为那是更长正文的片段。同一词条可能同时有两类命中（如 `Let's do a touch-n-go.`：既在课程卡片
+   > 长串开头、又有一份句首带数据前缀的字幕拷贝），`Apply` 会先处理字符串起点命中、再处理兜底命中。
+   > 12.4.4 Linux 的 `Hey there…` 等 5 条、12.4.3 Linux 的 4 条靠这条规则救回；
+   > 改这里务必守住条件，放宽会把长句译残。
 5. **前缀匹配要跳过**：`Flaps up!` 是 `Flaps up! 120 knots! 150 degree heading!` 的前缀，
    这类命中判为「不是独立的字符串」并跳过（8 条 skipped 就是这样来的），属正常现象。
 6. **Linux 必须显式设可执行位**：`File.WriteAllBytes` 新建文件默认 644，替换后游戏起不来。
@@ -339,7 +355,8 @@ tests/SmokeTests/        核心自检 + GUI headless 启动（CI 跑这个）
 # 4) 打补丁（必须得到金标准哈希）
 ... --apply --path "<副本目录>"
 (Get-FileHash "<副本目录>\X-Plane.exe" -Algorithm SHA256).Hash.ToLower()
-#   → d021f2656852416686e9f9c6222db90111ef791eea7967c839ade03e2e7efdbb
+#   → 按 compat/known-versions.json 里对应版本的 patchedSha256 核对：
+#     12.4.4 Windows ae57d619… / Linux 原生 257cdd95…；12.4.3 Windows deebc68e… / Linux 原生 b34e075c…
 # 5) 校验 / 还原
 ... --verify --path "<副本目录>"
 ... --restore --path "<副本目录>"
@@ -382,32 +399,39 @@ tests/SmokeTests/        核心自检 + GUI headless 启动（CI 跑这个）
 
 - **2 条「课程卡片描述」**（`Let's do a touch-n-go. …`）在 exe 里仍是英文：卡片描述显示走
   `Chinese.txt`（已中文），exe 里那份不参与显示，`--check` 会把它算成「待应用」，属正常。
+  （12.4.4/12.4.3 Linux 里 `Let's do a touch-n-go.` 还有一份字幕拷贝，句首带数据前缀；可用字节只有 22，
+  译文已收紧为 21 字节并纳入兜底写入，见 §4。）
 - **skipped 行都是前缀重叠**（Windows 8 行 / Linux 7 行，如 `Flaps up!`、`Brakes off!`），不是漏译。
 - **~22 条评分项标签**（`Throttle Control.` / `RPM Control` / … / `Pass/Fail`）未翻译，
   且**不在任何语言表里**；如果要译，需要新加译文并在清单里更新 patched sha256（会改变金标准）。
 - **Linux 原生版差异**（共用表里这些词条在 Linux 上算「不适用 / not-found」，均属正常平台差异）：
-  - **12.4.4 Linux 的 13 条 not-found**：
+  - **12.4.4 Linux 的 9 条 not-found**：
     - 4 个课程标题串在该 Linux 构建的二进制里**根本不存在**：`Cirrus Basic Handling` /
       `Evolution Intro` / `Evolution Emergencies` / `Tesla Model 3 Test-Drive`（12.4.4 Linux
       只保留 `Cirrus Intro` / `Cirrus Advanced Handling` / `Cirrus Landing` /
       `Evolution Cross-Country` 4 个标题串；游戏内标题显示情况待实机确认，工具无事可做）；
-    - 4 条字幕在 ELF 里带垃圾前缀、不是独立字符串起点（` AHey there, it's Austin Meyer…`、
-      `ЄEOK let's learn how to get this Cirrus SR-22…`、`EWe're going to fly new maneuvers…`、
-      `ALet's get going. Gimme one notch of flaps.`）→ 按「只认字符串起点」规则不打；
     - 4 条只是更长句的前缀 / 被长句先覆盖（`Brakes off!`、`Flaps up!`、`Flaps up! 120 knots…`、
       `A touch-n-go is a landing…`），最终字节正确（显示的是长句的中文）；
-    - 1 条 Linux 版措辞不同（Linux 是 `That ITT is a bit low. Add some power…`，表里是 Windows 的
-      `ITT is a bit low…`）。
-  - **12.4.3 Linux 的 9 条 not-found**（历史记录）：Tesla 标题缺失、3 条垃圾前缀
-    （`EWe're…` / `?I'm gonna show you…` / `ALet's get going…`）、`A touch-n-go…`、`Flaps up!`、
-    `Flaps up! 120 knots…`、`Brakes off!` 等前缀/覆盖情形。
-- **12.4.4 兼容已完成（Windows PE + Linux 原生版）**：Windows 金标准 `8b3e1521…`
-  （513/8/0/0，786 段 / 45,097 字节）；Linux 原生金标准 `8b29f772…`（499/7/0/13，
-  771 段 / 44,475 字节）。12.4.4 Linux 缺 4 个课程标题串（见上条），需实机确认游戏里这些
-  标题的显示来源；若实机仍显示英文，再另行调研（超出本工具「只改字符串字节」的能力范围）。
+    - 1 条 Linux 版措辞不同（表里的 `ITT is a bit low. Add some power…`；游戏里实际串是
+      `That ITT is a bit low…`，由表里另一条同义中文覆盖显示，不影响观感）。
+  - **已由引擎宽松兜底救回（不再算 not-found）**：12.4.4 Linux 5 条字幕串前直接跟着二进制数据/残字
+    （` AHey there, it's Austin Meyer…`、`ЄEOK let's learn how to get this Cirrus SR-22…`、
+    `@\x83EWe're going to fly new maneuvers…`、`ALet's get going. Gimme one notch of flaps.`、
+    `…95@Let's do a touch-n-go.`）；12.4.3 Linux 4 条（`We're going…`、`?I'm gonna show you…`、
+    `ALet's get going…`、`Let's do a touch-n-go.`）。规则见 §4 第 4 条，从英文原文处写入、前缀字节不动。
+  - **12.4.3 Linux 的 6 条 not-found**：Tesla 标题缺失、`Brakes off!`、`Flaps up!`、
+    `Flaps up! 120 knots…`、`A touch-n-go…` 等前缀/覆盖情形、`ITT is a bit low…`（由 `That ITT…` 覆盖）。
+- **12.4.4 兼容已完成（Windows PE + Linux 原生版）**：Windows 金标准 `ae57d619…`
+  （513/8/0/0，786 段 / 45,095 字节）；Windows 12.4.3 金标准 `deebc68e…`（513/8/0/0，
+  785 段 / 45,095 字节）；Linux 原生 12.4.4 金标准 `257cdd95…`（504/7/0/9，776 段 / 44,820 字节）；
+  Linux 原生 12.4.3 金标准 `b34e075c…`（507/7/0/6，779 段 / 44,871 字节）。
+  Linux 12.4.4 共救回 5 条、12.4.3 共 4 条句首带垃圾数据的字幕（含每节课第一句与
+  `Let's do a touch-n-go.`）；后者只有 22 字节可用，译文随之收紧到 21 字节，Windows 两个版本的
+  金标准也随译文变化重新验证（用原版 exe 副本实测）。12.4.4 Linux 缺 4 个课程标题串（见上条），需实机确认
+  游戏里这些标题的显示来源；若实机仍显示英文，再另行调研（超出本工具「只改字符串字节」的能力范围）。
 - **单一译文 + 字节上限**：每个词条只有一条译文（两平台一致）；`budget_bytes` 记录该条在
-  目标二进制里的最大可用字节数（Windows 12.4.4 与 Linux 原生 12.4.3/12.4.4 取最紧位置）。
-  改译文表时：中文 UTF-8 字节数必须 ≤ `budget_bytes`（自检会校验），改完务必跑 `--dry-run`
+  目标二进制里的最大可用字节数（Windows 12.4.4 与 Linux 原生 12.4.3/12.4.4 取最紧位置，
+  含 §4 兜底写入的位置）。改译文表时：中文 UTF-8 字节数必须 ≤ `budget_bytes`（自检会校验），改完务必跑 `--dry-run`
   并对副本做一次端到端验证（哈希要与清单一致）。不要再引入"完整版/短版"双译文机制。
 - **ARM64 产物未经实机验证**：`win-arm64` / `linux-arm64` 只在 GitHub ARM64 runner 上跑
   冒烟测试与 `--selftest`（合成数据），**没有**在真实 Windows on ARM / ARM64 Linux 设备上运行过，

@@ -27,6 +27,8 @@ public static class Selftest
         TestSafeSpan();
         TestPatchOne();
         TestEngineOrdering();
+        TestLenientMatching();
+        TestLenientApply();
         TestElfBlob();
         TestVerifier();
         TestManifest();
@@ -209,6 +211,98 @@ public static class Selftest
         Check(report.Ok, $"结构校验通过（{report.Summary()}）");
     }
 
+    /// <summary>
+    /// 12.4.4 Linux 构建里个别字幕串前直接跟着二进制数据（没有 NUL 分隔），英文原文不在「字符串起点」。
+    /// 宽松兜底必须能识别这种命中，同时不能把「长句片段」当成独立词条。
+    /// </summary>
+    private static void TestLenientMatching()
+    {
+        Console.WriteLine("lenient_prefix（句首垃圾数据 / 残字）");
+        byte[] hey = Encoding.UTF8.GetBytes("Hey there, it's Austin Meyer.");
+        byte[] flaps = Encoding.UTF8.GetBytes("Flaps up!");
+        byte[] chineseHey = Encoding.UTF8.GetBytes("嗨，我是 Austin Meyer。");
+        byte[] chineseFlaps = Encoding.UTF8.GetBytes("收襟翼！");
+
+        var bytes = new List<byte>();
+        bytes.Add(0x00);
+        bytes.AddRange(new byte[] { 0x20, (byte)'A' });            // 数据残字 " A"
+        bytes.AddRange(hey);
+        bytes.Add(0x00);
+        bytes.AddRange(new byte[] { 0x40, 0x83, (byte)'E' });      // 非法 UTF-8 残字
+        bytes.AddRange(hey);
+        bytes.Add(0x00);
+        bytes.AddRange(Encoding.UTF8.GetBytes("OK we got 200 feet! ")); // 长句前缀，应忽略
+        bytes.AddRange(flaps);
+        bytes.Add(0x00);
+        byte[] blob = bytes.ToArray();
+
+        var matches = PatchEngine.LenientOccurrences(blob, hey, 0, blob.Length);
+        Check(matches.Count == 2, $"识别出 {matches.Count} 条句首垃圾前缀命中（预期 2）");
+        Check(matches.Count == 2 && matches[0].Offset == 3 && matches[0].PrefixLength == 2,
+            "第一处命中：残字 \" A\" 之后，保留前缀不动");
+        Check(matches.Count == 2 && matches[1].PrefixLength == 3,
+            "第二处命中：非法 UTF-8 残字之后");
+
+        var noMatch = PatchEngine.LenientOccurrences(blob, flaps, 0, blob.Length);
+        Check(noMatch.Count == 0, "长句前缀里的短词条不被误判为独立字幕");
+
+        int writeOffset = matches.Count > 0 ? matches[0].Offset : -1;
+        var (status, _, _) = PatchEngine.PatchOneAt(
+            blob, writeOffset, hey, chineseHey, matches.Count > 0 ? matches[0].Note : null);
+        Check(status == PatchStatus.Patched, "能从英文原文处写入（跳过句首垃圾前缀）");
+        Check(Encoding.UTF8.GetString(blob, 3, chineseHey.Length) == "嗨，我是 Austin Meyer。",
+            "写入后该处是中文，且前缀字节保持不变");
+        Check(blob[1] == 0x20 && blob[2] == (byte)'A', "句首垃圾前缀未被改动");
+        Check(!blob.AsSpan().SequenceEqual(bytes.ToArray()), "内容确有改动");
+    }
+
+    /// <summary>
+    /// 同一条字幕可能既有「字符串起点」命中（如课程卡片长串开头，属前缀重叠要跳过），
+    /// 又有一份句首带数据前缀的独立拷贝（字幕本体，需要写）。Apply 必须两边都处理。
+    /// 12.4.4 Linux 的 `Let's do a touch-n-go.` 就是这种情形。
+    /// </summary>
+    private static void TestLenientApply()
+    {
+        Console.WriteLine("lenient_apply（前缀长串 + 句首垃圾前缀独立拷贝）");
+        const string longText = "Let's do a touch-n-go. A touch-n-go is a landing followed by full power.";
+        const string shortText = "Let's do a touch-n-go.";
+        byte[] anchorStart = Encoding.UTF8.GetBytes("oz_intro_widget_controller_text");
+        byte[] anchorEnd = Encoding.UTF8.GetBytes("Could not load sound bank at:");
+
+        var bytes = new List<byte>();
+        bytes.AddRange(anchorStart);
+        bytes.Add(0x00);
+        int longStart = bytes.Count;
+        bytes.AddRange(Encoding.UTF8.GetBytes(longText));
+        bytes.Add(0x00);
+        bytes.Add(0x00);
+        bytes.AddRange(new byte[] { 0x40, 0x83, (byte)'E' });   // 数据尾巴（非法 UTF-8）
+        int standaloneStart = bytes.Count;
+        bytes.AddRange(Encoding.UTF8.GetBytes(shortText));
+        bytes.Add(0x00);
+        bytes.AddRange(anchorEnd);
+        bytes.Add(0x00);
+        byte[] blob = bytes.ToArray();
+
+        var image = new LessonImage(blob);
+        image.LocateRegion();
+        var translations = new List<Translation>
+        {
+            new(shortText, "来个连续起降吧", 1000),
+        };
+
+        var result = PatchEngine.Apply(blob, image, translations);
+        Check(result.Patched == 1, $"独立拷贝写入 {result.Patched} 条（预期 1）");
+        Check(result.Skipped == 1, $"长串开头的同名前缀跳过 {result.Skipped} 条（预期 1）");
+        Check(result.NotFound == 0 && result.TooLong == 0, "没有未找到 / 放不下");
+        Check(Encoding.UTF8.GetString(blob, longStart, longText.Length) == longText,
+            "长串开头的原文保持不变");
+        byte[] expected = Encoding.UTF8.GetBytes("来个连续起降吧");
+        Check(Encoding.UTF8.GetString(blob, standaloneStart, expected.Length) == "来个连续起降吧",
+            "独立拷贝已写成中文");
+        Check(result.Rows.Exists(r => r.Detail.Contains("垃圾前缀")), "报告里标注了跳过的垃圾前缀");
+    }
+
     private static void TestElfBlob()
     {
         Console.WriteLine("elf_blob（同一套逻辑跑 ELF 魔数的数据）");
@@ -262,7 +356,7 @@ public static class Selftest
         if (windows1244 is not null)
         {
             Check(windows1244.ExeSize == 55022152, $"Windows 12.4.4 exe 大小 {windows1244.ExeSize:N0}");
-            Check(windows1244.PatchedSha256 == "8b3e152150043b9f7e32ee520d895354e537fc5eb5c418aa39e0048b0ecfabb7", "Windows 12.4.4 补丁后 sha256 正确");
+            Check(windows1244.PatchedSha256 == "ae57d6197d44d0bcfa4cc1017c1caccc762338871a483745a965e18591b78a3b", "Windows 12.4.4 补丁后 sha256 正确");
             Check(windows1244.RegionStart == 42825408 && windows1244.RegionEnd == 42911160, $"Windows 12.4.4 文本区间 {windows1244.RegionStart}..{windows1244.RegionEnd}");
             Check(windows1244.Candidates == 582, $"Windows 12.4.4 区间内候选字符串 {windows1244.Candidates}");
             Check(windows1244.Entries == 513, $"Windows 12.4.4 词条数 {windows1244.Entries}");
@@ -281,7 +375,7 @@ public static class Selftest
         if (windows1243 is not null)
         {
             Check(windows1243.ExeSize == 91132488, $"Windows 12.4.3 exe 大小 {windows1243.ExeSize:N0}");
-            Check(windows1243.PatchedSha256 == "d021f2656852416686e9f9c6222db90111ef791eea7967c839ade03e2e7efdbb", "Windows 12.4.3 补丁后 sha256 正确");
+            Check(windows1243.PatchedSha256 == "deebc68ee5d3fe5adb33031a105d61d62c4554dd882b1bae88f7705fdc90ec5e", "Windows 12.4.3 补丁后 sha256 正确");
             Check(windows1243.Entries == 513, $"Windows 12.4.3 词条数 {windows1243.Entries}");
             Check(windows1243.IsVerified, "Windows 12.4.3 状态为 verified");
         }
@@ -292,17 +386,17 @@ public static class Selftest
         if (linux1244 is not null)
         {
             Check(linux1244.ExeSize == 78659600, $"Linux 12.4.4 exe 大小 {linux1244.ExeSize:N0}");
-            Check(linux1244.PatchedSha256 == "8b29f772ce110ba9df92335de14f181be487faedb7ce8aa02acbfc11feca295f", "Linux 12.4.4 补丁后 sha256 正确");
+            Check(linux1244.PatchedSha256 == "257cdd957852f9065c8a2c1bf4e769198615189d081ac79c3e63adb4dbf632da", "Linux 12.4.4 补丁后 sha256 正确");
             Check(linux1244.RegionStart == 49594154 && linux1244.RegionEnd == 49647601, $"Linux 12.4.4 文本区间 {linux1244.RegionStart}..{linux1244.RegionEnd}");
             Check(linux1244.Candidates == 649, $"Linux 12.4.4 区间内候选字符串 {linux1244.Candidates}");
             Check(linux1244.Entries == 513, $"Linux 12.4.4 词条数 {linux1244.Entries}（共用同一张表）");
             Check(linux1244.IsVerified, "Linux 12.4.4 状态为 verified");
             Check(linux1244.PatchStats is not null &&
-                  linux1244.PatchStats.Patched == 499 &&
+                  linux1244.PatchStats.Patched == 504 &&
                   linux1244.PatchStats.Skipped == 7 &&
                   linux1244.PatchStats.TooLong == 0 &&
-                  linux1244.PatchStats.NotFound == 13,
-                "Linux 12.4.4 补丁统计 499/7/0/13");
+                  linux1244.PatchStats.NotFound == 9,
+                "Linux 12.4.4 补丁统计 504/7/0/9");
         }
 
         // 旧版 Linux 原生版：12.4.3-r2 (build 124311)，仍保留在清单里继续支持
@@ -311,10 +405,14 @@ public static class Selftest
         if (linux is not null)
         {
             Check(linux.ExeSize == 76056352, $"Linux 12.4.3 exe 大小 {linux.ExeSize:N0}");
-            Check(linux.PatchedSha256 == "52218d9089e491f496bf96701989ab5b0a83eb76061086b21e0b9d786b88480e", "Linux 12.4.3 补丁后 sha256 正确");
+            Check(linux.PatchedSha256 == "b34e075c300ed61174fba79fe7ddab4d2bdb4756597715fd1f15726d1855a5c2", "Linux 12.4.3 补丁后 sha256 正确");
             Check(linux.Entries == 513, $"Linux 12.4.3 词条数 {linux.Entries}（共用同一张表）");
             Check(linux.IsVerified, "Linux 12.4.3 状态为 verified");
-            Check(linux.PatchStats is not null && linux.PatchStats.TooLong == 0, "Linux 12.4.3 没有放不下的译文");
+            Check(linux.PatchStats is not null &&
+                  linux.PatchStats.Patched == 507 &&
+                  linux.PatchStats.TooLong == 0 &&
+                  linux.PatchStats.NotFound == 6,
+                "Linux 12.4.3 补丁统计 507/7/0/6");
         }
 
         Check(manifest.FindByOriginal(windows1244?.Sha256 ?? "") is not null, "能按 Windows 12.4.4 原版哈希查到");

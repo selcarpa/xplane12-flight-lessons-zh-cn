@@ -9,7 +9,7 @@
       "status": "verified",
       "exeSize": 55022152,
       "sha256": "5b18cc7d406bdf22be20135849b8705622cef6882edbb6e8d7c54e095b712563",
-      "patchedSha256": "8b3e152150043b9f7e32ee520d895354e537fc5eb5c418aa39e0048b0ecfabb7",
+      "patchedSha256": "ae57d6197d44d0bcfa4cc1017c1caccc762338871a483745a965e18591b78a3b",
       "regionStart": 42825408,
       "regionEnd": 42911160,
       "candidates": 582,
@@ -30,20 +30,20 @@
       "status": "verified",
       "exeSize": 78659600,
       "sha256": "565ac3942e952794d5625e04b2147543f2fca2f027942f5f205d142e52728fce",
-      "patchedSha256": "8b29f772ce110ba9df92335de14f181be487faedb7ce8aa02acbfc11feca295f",
+      "patchedSha256": "257cdd957852f9065c8a2c1bf4e769198615189d081ac79c3e63adb4dbf632da",
       "regionStart": 49594154,
       "regionEnd": 49647601,
       "candidates": 649,
       "entries": 513,
       "patchStats": {
-        "patched": 499,
+        "patched": 504,
         "skipped": 7,
         "tooLong": 0,
-        "notFound": 13
+        "notFound": 9
       },
       "platforms": [ "linux-native" ],
       "verifiedOn": "2026-11-16",
-      "notes": "Linux 原生版（X-Plane-x86_64，ELF，12.4.4-r2-e8642cec，Compiled on Nov 9 2026）。与 Windows 共用同一张译文表 translations/zh.csv（单一译文 + 每条字节上限）。13 条 not-found 属平台差异：4 个课程标题串在 12.4.4 Linux 构建里不存在（Cirrus Basic Handling / Evolution Intro / Evolution Emergencies / Tesla Model 3 Test-Drive）；4 条句子在 ELF 里带垃圾前缀（AHey there… / ЄEOK let's learn… / EWe're going to fly… / ALet's get going…，不是独立字符串起点）；Brakes off! / Flaps up! / Flaps up! 120 knots… / A touch-n-go… 只是更长句的前缀或被长句先覆盖；1 条 Linux 版措辞不同（That ITT is a bit low…）。"
+      "notes": "Linux 原生版（X-Plane-x86_64，ELF，12.4.4-r2-e8642cec，Compiled on Nov 9 2026）。与 Windows 共用同一张译文表 translations/zh.csv（单一译文 + 每条字节上限）。句首带垃圾数据/残字的 5 条字幕（Hey there… / OK let's learn… / We're going to fly… / Let's get going… / Let's do a touch-n-go.）由引擎的宽松兜底从英文原文处写入（后者是把译文收紧到 22 字节后才放得下）；其余 9 条 not-found 属平台差异：4 个课程标题串在 12.4.4 Linux 构建里不存在（Cirrus Basic Handling / Evolution Intro / Evolution Emergencies / Tesla Model 3 Test-Drive）；Brakes off! / Flaps up! / Flaps up! 120 knots… / A touch-n-go… 只是更长句的前缀或被长句先覆盖；1 条 Linux 版措辞差异（ITT is a bit low. Add some power…）已由 That ITT… 词条覆盖显示。详见 AGENT.md §9。"
     },
     {
       "id": "12.4.3-r2-124311",
@@ -51,7 +51,7 @@
       "status": "verified",
       "exeSize": 91132488,
       "sha256": "2ca099b7c6b218e78d02bdbe298be2aebf670b67c5adff827449b065e1107936",
-      "patchedSha256": "d021f2656852416686e9f9c6222db90111ef791eea7967c839ade03e2e7efdbb",
+      "patchedSha256": "deebc68ee5d3fe5adb33031a105d61d62c4554dd882b1bae88f7705fdc90ec5e",
       "regionStart": 41552520,
       "regionEnd": 41612728,
       "candidates": 621,
@@ -72,20 +72,20 @@
       "status": "verified",
       "exeSize": 76056352,
       "sha256": "0fe6bc5c5d661633840bc5eba0de88d8def190f1ff40f6a7011d9252cc63eabb",
-      "patchedSha256": "52218d9089e491f496bf96701989ab5b0a83eb76061086b21e0b9d786b88480e",
+      "patchedSha256": "b34e075c300ed61174fba79fe7ddab4d2bdb4756597715fd1f15726d1855a5c2",
       "regionStart": 47827431,
       "regionEnd": 47880969,
       "candidates": 614,
       "entries": 513,
       "patchStats": {
-        "patched": 503,
+        "patched": 507,
         "skipped": 7,
         "tooLong": 0,
-        "notFound": 9
+        "notFound": 6
       },
       "platforms": [ "linux-native" ],
       "verifiedOn": "2026-11-15",
-      "notes": "Linux 原生版（X-Plane-x86_64，ELF）。与 Windows 共用同一张译文表 translations/zh.csv（单一译文 + 每条字节上限，两平台显示一致）。9 条 not-found 为 Windows 版独有词条（Linux 版不存在或非独立字符串），属正常平台差异。"
+      "notes": "Linux 原生版（X-Plane-x86_64，ELF）。与 Windows 共用同一张译文表 translations/zh.csv（单一译文 + 每条字节上限，两平台显示一致）。句首带垃圾数据的 4 条字幕（We're going to fly… / I'm gonna show you… / Let's get going… / Let's do a touch-n-go.）由引擎的宽松兜底从英文原文处写入；6 条 not-found 为长句前缀/被覆盖情形（Brakes off!、Flaps up!、Flaps up! 120 knots…、A touch-n-go…、Tesla 标题、ITT 短句由 That ITT… 词条覆盖），属正常平台差异。"
     }
   ]
 }
