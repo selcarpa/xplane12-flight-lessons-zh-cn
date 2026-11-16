@@ -31,6 +31,7 @@ public static class Selftest
         TestVerifier();
         TestManifest();
         TestTranslations();
+        TestProcessProbe();
         TestPaths();
         TestDirectoryOpener();
 
@@ -371,6 +372,29 @@ public static class Selftest
             }
         }
         Check(titles == 8, $"共 {titles} 个课程标题（预期 8；Linux 原生版没有 Tesla 标题串，应用时算「不适用」）");
+    }
+
+    /// <summary>
+    /// 进程判定只看 X-Plane 家族；单独的 wineserver / proton 与工具自身的进程名不能算游戏在运行
+    /// （旧实现会因残留 Wine 进程把「打补丁」按钮一直置灰）。
+    /// </summary>
+    private static void TestProcessProbe()
+    {
+        Console.WriteLine("process_probe（不把残留 Wine 进程 / 工具自身当成游戏）");
+
+        Check(ProcessProbe.IsGameProcessName("X-Plane"), "X-Plane 算游戏进程");
+        Check(ProcessProbe.IsGameProcessName("X-Plane.exe"), "X-Plane.exe（Wine/Proton）算游戏进程");
+        Check(ProcessProbe.IsGameProcessName("X-Plane-x86_64"), "X-Plane-x86_64（Linux 原生）算游戏进程");
+        Check(!ProcessProbe.IsGameProcessName("XPlane12-FlightLessons-zh-CN"), "工具自己的进程名不算游戏");
+        Check(!ProcessProbe.IsGameProcessName("wineserver"), "wineserver 本身不算游戏进程");
+        Check(!ProcessProbe.IsGameProcessName("proton"), "proton 本身不算游戏进程");
+        Check(!ProcessProbe.IsGameProcessName(""), "空进程名不算游戏");
+        Check(!ProcessProbe.IsGameProcessName(null), "null 进程名不算游戏");
+
+        Check(ProcessProbe.IsWineProcessName("wineserver"), "wineserver 被识别为 Wine 进程");
+        Check(ProcessProbe.IsWineProcessName("wine64-preloader"), "wine64-preloader 被识别为 Wine 进程");
+        Check(ProcessProbe.IsWineProcessName("proton"), "proton 被识别为 Wine/Proton 进程");
+        Check(!ProcessProbe.IsWineProcessName("X-Plane-x86_64"), "原生 X-Plane 不是 Wine 进程");
     }
 
     private static void TestPaths()

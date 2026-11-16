@@ -300,6 +300,12 @@ tests/SmokeTests/        核心自检 + GUI headless 启动（CI 跑这个）
     → 统一走 `Platform/DirectoryOpener.cs`：按 PATH 解析出**绝对路径**再启动，并显式设置子进程
     `WorkingDirectory`；`GameLocator` 里读当前目录用 `CurrentDirectoryOrNull()` 降级，不要直接读
     `Environment.CurrentDirectory`。自检 `directory_opener / cwd_resilience` 会复现这个现场。
+13. **Linux 进程检测别用宽泛 marker**：早期只要存在 `wineserver` / `wine64-preloader` / `proton`
+    进程就当成「游戏在运行」，Proton 残留进程会让「打补丁」按钮一直灰（实测：切到 Linux 原生版后
+    按钮变灰，其实游戏根本没开）。现在只认真正的 X-Plane 进程名（`X-Plane` / `X-Plane.exe` /
+    `X-Plane-x86_64`，并跳过僵尸进程）；Wine/Proton 进程还要看它的 `cmdline`/`maps` 里是否真的
+    加载了 X-Plane。分析时会把命中的进程写进日志（`检测到 X-Plane 12 正在运行：…`），
+    自检 `process_probe` 锁定这个行为。
 
 ---
 

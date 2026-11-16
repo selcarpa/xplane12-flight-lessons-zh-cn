@@ -214,6 +214,11 @@ public sealed class PatchService
 
         analysis.GameRunning = ProcessProbe.IsGameRunning(out string runningDetail);
         analysis.GameRunningDetail = runningDetail;
+        if (analysis.GameRunning)
+        {
+            // 写进日志，便于用户/维护者判断是被哪个进程挡住的
+            Log?.Invoke($"检测到 X-Plane 12 正在运行：{runningDetail}");
+        }
 
         analysis.Font = WineFontProbe.Check(GameDir);
 

@@ -349,7 +349,7 @@ public sealed class MainWindow : Window
 
         if (analysis.GameRunning)
         {
-            SetStatus("⚠ 检测到 X-Plane 12 正在运行，请退出游戏后再打补丁。");
+            SetStatus($"⚠ 检测到 X-Plane 12 正在运行（{analysis.GameRunningDetail}），请退出游戏后再打补丁。");
         }
         else if (analysis.AlreadyPatched)
         {
