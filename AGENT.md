@@ -9,23 +9,52 @@
 
 ### 1.1 游戏与补丁对象
 
-Windows 版（`X-Plane.exe`，PE）：
+Windows 版（`X-Plane.exe`，PE）——**当前最新验证：12.4.4-r2**：
+
+| 项目 | 值 |
+|---|---|
+| 版本 | X-Plane **12.4.4-r2**，build **124419**，Intel 64-bit（内部版本串 `12.4.4-r2-e8642cec`） |
+| Steam AppID | **2014780** |
+| `X-Plane.exe` 大小 | **55,022,152** 字节（12.4.4 起体积比 12.4.3 的 91 MB 明显减小，教学文本内容未变） |
+| 原版 sha256 | `5b18cc7d406bdf22be20135849b8705622cef6882edbb6e8d7c54e095b712563` |
+| 打完补丁 sha256 | `8b3e152150043b9f7e32ee520d895354e537fc5eb5c418aa39e0048b0ecfabb7` |
+| 文本区间 | `42,825,408 .. 42,911,160`（同一对锚点，见 §4） |
+| 区间内候选字符串 | **582** 条（区间边界随编译布局变化，与 12.4.3 的 621 条不可直接比较） |
+| 译文条数 | **513**（8 课程标题 + 505 口播字幕，与 12.4.3 相同） |
+| 补丁统计 | patched **513** / skipped **8**（前缀重叠）/ too-long **0** / not-found **0** |
+| 改动量 | **786 段 / 45,097 字节**（占文件 0.0820%；与 12.4.3 改动字节数相同，段数差 1 是 64KB 分块计段导致） |
+| 文件结构 | 大小、PE 头 `[:0x400]`、文件尾 `[-0x1000:]` 均不变 |
+
+Windows 版 12.4.3-r2（仍保留在兼容清单里，继续支持）：
 
 | 项目 | 值 |
 |---|---|
 | 版本 | X-Plane **12.4.3-r2**，build **124311**，Intel 64-bit |
-| Steam AppID | **2014780** |
 | `X-Plane.exe` 大小 | **91,132,488** 字节 |
 | 原版 sha256 | `2ca099b7c6b218e78d02bdbe298be2aebf670b67c5adff827449b065e1107936` |
 | 打完补丁 sha256 | `d021f2656852416686e9f9c6222db90111ef791eea7967c839ade03e2e7efdbb` |
-| 文本区间 | `41,552,520 .. 41,612,728`（起止锚点见 §4） |
+| 文本区间 | `41,552,520 .. 41,612,728` |
 | 区间内候选字符串 | **621** 条 |
-| 译文条数 | **513**（8 课程标题 + 505 口播字幕） |
-| 补丁统计 | patched **513** / skipped **8**（前缀重叠）/ too-long **0** / not-found **0** |
+| 补丁统计 | patched **513** / skipped **8** / too-long **0** / not-found **0** |
 | 改动量 | **785 段 / 45,097 字节**（占文件 0.0495%） |
 | 文件结构 | 大小、PE 头 `[:0x400]`、文件尾 `[-0x1000:]` 均不变 |
 
-Linux 原生版（`X-Plane-x86_64`，ELF）：
+Linux 原生版（`X-Plane-x86_64`，ELF）——**当前最新验证：12.4.4-r2**：
+
+| 项目 | 值 |
+|---|---|
+| 版本 | X-Plane **12.4.4-r2**，build **124419**（`Compiled on Nov  9 2026 16:27:21`） |
+| `X-Plane-x86_64` 大小 | **78,659,600** 字节 |
+| 原版 sha256 | `565ac3942e952794d5625e04b2147543f2fca2f027942f5f205d142e52728fce` |
+| 打完补丁 sha256 | `8b29f772ce110ba9df92335de14f181be487faedb7ce8aa02acbfc11feca295f` |
+| 文本区间 | `49,594,154 .. 49,647,601`（同一对锚点，字节搜索即可定位） |
+| 区间内候选字符串 | **649** 条 |
+| 译文条数 | **单一共用表 513 条**（两平台同一条译文；Linux 上 13 条词条不适用，见 §9） |
+| 补丁统计 | patched **499** / skipped **7** / too-long **0** / not-found **13**（见 §9） |
+| 改动量 | **771 段 / 44,475 字节**（占文件 0.0565%；连续改动区间 770 段，64KB 分块计段 +1） |
+| 文件结构 | 大小、ELF 头 `[:0x400]`、文件尾 `[-0x1000:]` 均不变 |
+
+Linux 原生版 12.4.3-r2（仍保留在兼容清单里，继续支持）：
 
 | 项目 | 值 |
 |---|---|
@@ -33,15 +62,15 @@ Linux 原生版（`X-Plane-x86_64`，ELF）：
 | `X-Plane-x86_64` 大小 | **76,056,352** 字节 |
 | 原版 sha256 | `0fe6bc5c5d661633840bc5eba0de88d8def190f1ff40f6a7011d9252cc63eabb` |
 | 打完补丁 sha256 | `52218d9089e491f496bf96701989ab5b0a83eb76061086b21e0b9d786b88480e` |
-| 文本区间 | `47,827,431 .. 47,880,969`（同一对锚点，字节搜索即可定位） |
+| 文本区间 | `47,827,431 .. 47,880,969` |
 | 区间内候选字符串 | **614** 条 |
-| 译文条数 | **单一共用表 513 条**（两平台同一条译文；Linux 上 8 条词条不适用，见 §9） |
-| 补丁统计 | patched **503** / skipped **7** / too-long **0** / not-found **9**（8 条 Windows 独有 + 1 条被长句先覆盖，见 §9） |
+| 补丁统计 | patched **503** / skipped **7** / too-long **0** / not-found **9** |
 | 改动量 | **773 段 / 44,632 字节** |
 | 文件结构 | 大小、ELF 头 `[:0x400]`、文件尾 `[-0x1000:]` 均不变 |
 
-> 🎯 **金标准**：任何实现（Windows / Linux）在可执行文件副本上打完补丁都必须得到对应的
-> 补丁后 sha256（Windows `d021f265…`，Linux 原生 `52218d90…`）。C# 版已实测逐字节一致。
+> 🎯 **金标准**：任何实现（Windows / Linux）在可执行文件副本上打完补丁都必须得到对应版本的
+> 补丁后 sha256：Windows 12.4.4 `8b3e1521…`、Windows 12.4.3 `d021f265…`、Linux 原生 12.4.4
+> `8b29f772…`、Linux 原生 12.4.3 `52218d90…`。C# 版已实测逐字节一致。
 
 ### 1.2 字体（决定「Wine 下中文会不会变方块」）
 
@@ -76,10 +105,14 @@ X-Plane.exe 里引用了该文件名（NotoSansCJK-SC-Regular ×1、Resources/fo
 
 - 每个词条**只有一条译文**，两个平台显示完全一致（不再维护"完整版/短版"两套）；
 - `budget_bytes` 是该词条允许写入的最大 UTF-8 字节数：取当前验证版本里**最紧的发生位置**
-  （Linux 原生版优先；Linux 无独立出现时取 Windows 版）。ELF 字符串紧凑排列，
+  （Windows 12.4.4 与 Linux 原生 12.4.3/12.4.4 取最紧）。ELF 字符串紧凑排列，
   部分长句的上限就是英文字符串自身长度，译文必须在限制内表达清楚；
+- 12.4.4 比旧版更紧的 4 条已收紧上限：`Evolution Cross-Country` 31→23、
+  `OK so now you got a few of the X-Plane keys…` 128→127、`All right your airplane. I'm out.` 39→35
+  （Windows 12.4.4），`I'm gonna show you a YouTube video…` 71→67（Linux 12.4.4）；
 - 自检会校验「每条中文 ≤ budget_bytes」，`--dry-run`/`--apply` 仍以实际二进制 safe_span 为准；
-- 好处：单文件维护、双平台显示一致；当前金标准 Windows `d021f265…`、Linux `52218d90…`。
+- 好处：单文件维护、双平台显示一致；当前金标准 Windows 12.4.4 `8b3e1521…`、
+  Windows 12.4.3 `d021f265…`、Linux 原生 12.4.4 `8b29f772…`、Linux 原生 12.4.3 `52218d90…`。
 
 ---
 
@@ -87,27 +120,32 @@ X-Plane.exe 里引用了该文件名（NotoSansCJK-SC-Regular ×1、Resources/fo
 
 ### 2.1 清单
 
-[`compat/known-versions.json`](compat/known-versions.json) 记录「哪些可执行文件版本可信」（Windows PE 与 Linux 原生 ELF 各一条）：
+[`compat/known-versions.json`](compat/known-versions.json) 记录「哪些可执行文件版本可信」
+（Windows PE 12.4.4 / 12.4.3 与 Linux 原生 ELF 12.4.4 / 12.4.3 共四条；旧的保留）：
 
 ```json
 {
-  "id": "12.4.3-r2-124311",
-  "displayName": "X-Plane 12.4.3-r2 (build 124311)",
+  "id": "12.4.4-r2-124419",
+  "displayName": "X-Plane 12.4.4-r2 (build 124419)",
   "status": "verified",
-  "exeSize": 91132488,
-  "sha256": "<Windows 原版 sha256>",
-  "patchedSha256": "<打完补丁的 sha256>",
-  "regionStart": 41552520, "regionEnd": 41612728,
-  "candidates": 621, "entries": 513,
-  "patchStats": { "patched": 513, "skipped": 8, "tooLong": 0 },
+  "exeSize": 55022152,
+  "sha256": "5b18cc7d406bdf22be20135849b8705622cef6882edbb6e8d7c54e095b712563",
+  "patchedSha256": "8b3e152150043b9f7e32ee520d895354e537fc5eb5c418aa39e0048b0ecfabb7",
+  "regionStart": 42825408, "regionEnd": 42911160,
+  "candidates": 582, "entries": 513,
+  "patchStats": { "patched": 513, "skipped": 8, "tooLong": 0, "notFound": 0 },
   "platforms": ["windows", "linux-wine"],
-  "verifiedOn": "2026-11-15"
+  "verifiedOn": "2026-11-16"
 }
 ```
 
-Linux 原生版条目字段含义相同（`exeSize` 76,056,352、`regionStart/End` 47,827,431/47,880,969、
-`entries` 513（共用表）、`patchStats` { patched 503 / skipped 7 / tooLong 0 / notFound 9 }、
-`platforms: ["linux-native"]`）。清单同时被编译进 exe；exe 同目录的
+Windows 12.4.3 条目字段含义相同（`exeSize` 91,132,488、`regionStart/End` 41,552,520/41,612,728、
+`candidates` 621、`patchedSha256` `d021f265…`）。Linux 原生版条目字段含义也相同：12.4.4
+（`exeSize` 78,659,600、`regionStart/End` 49,594,154/49,647,601、`candidates` 649、
+`patchedSha256` `8b29f772…`、`patchStats` { patched 499 / skipped 7 / tooLong 0 / notFound 13 }）、
+12.4.3（`exeSize` 76,056,352、`regionStart/End` 47,827,431/47,880,969、`candidates` 614、
+`patchStats` { patched 503 / skipped 7 / tooLong 0 / notFound 9 }），
+`platforms: ["linux-native"]`。清单同时被编译进 exe；exe 同目录的
 `compat/known-versions.json` 会覆盖内置版本。
 
 ### 2.2 校验链（`PatchService`）
@@ -131,7 +169,14 @@ Linux 原生版条目字段含义相同（`exeSize` 76,056,352、`regionStart/En
 2. 跑 `--dry-run` 确认没有 `too-long`；
 3. 在一份**副本**上 `--apply --force`，记下新 sha256 与统计；
 4. 把新版本条目加进 `compat/known-versions.json`（旧的保留），`status` 写 `verified`；
-5. 提交时附上验证数据（版本、大小、两个 sha256、统计）。
+5. 同步更新 `src/Cli/Selftest.cs` 里 `compat_manifest` 的硬编码断言（原版/补丁后哈希、大小、
+   区间、候选数、统计），以及 README / AGENT 的版本表（**Release 说明里的兼容版本表由 CI 从
+   清单自动生成，不用手改**；见 §10）；
+6. 若新版本在某个词条上出现**更紧**的可用字节，按 §1.4 收紧 `translations/zh.csv` 的 `budget_bytes`；
+7. 提交时附上验证数据（版本、大小、两个 sha256、统计）。
+
+> 新版本 exe 体积可能大幅变化（12.4.4 Windows 55,022,152 字节，12.4.3 是 91,132,488 字节），
+> 不能靠体积判断版本；以 `--check` 的锚点/区间与 `--dry-run` 的统计为准。
 
 ---
 
@@ -308,9 +353,10 @@ tests/SmokeTests/        核心自检 + GUI headless 启动（CI 跑这个）
 ## 7. 游戏更新后怎么办
 
 1. 跑 `--check`。若报「找不到教学文本锚点」→ 锚点失效：在 `Resources/text` 附近的字符串里
-   重新挑一个**不会被翻译**的锚点，改 `Core/PeImage.cs` 的常量。
+   重新挑一个**不会被翻译**的锚点，改 `Core/LessonImage.cs` 的常量。
 2. 若区间正常但 `--dry-run` 报大量 `not-found`/`too-long` → 课程文案改写了：按新英文更新译文表。
-3. 若只是版本变了但文案没变 → 走 §2.3 把新版本加进兼容清单。
+3. 若只是版本变了但文案没变 → 走 §2.3 把新版本加进兼容清单（12.4.4 Windows 就是这样加的：
+   只新增清单条目 + 更新自检/文档，译文一条未改）。
 4. **Steam 校验/更新会把 exe 换回原版**，重新 `--apply` 即可；`backup/` 不会被覆盖。
 
 ---
@@ -330,20 +376,31 @@ tests/SmokeTests/        核心自检 + GUI headless 启动（CI 跑这个）
 
 - **2 条「课程卡片描述」**（`Let's do a touch-n-go. …`）在 exe 里仍是英文：卡片描述显示走
   `Chinese.txt`（已中文），exe 里那份不参与显示，`--check` 会把它算成「待应用」，属正常。
-- **8 条 skipped**：都是更长字符串的前缀（如 `Flaps up!`），不是漏译。
+- **skipped 行都是前缀重叠**（Windows 8 行 / Linux 7 行，如 `Flaps up!`、`Brakes off!`），不是漏译。
 - **~22 条评分项标签**（`Throttle Control.` / `RPM Control` / … / `Pass/Fail`）未翻译，
   且**不在任何语言表里**；如果要译，需要新加译文并在清单里更新 patched sha256（会改变金标准）。
-- **Linux 原生版差异**（共用表里这些词条在 Linux 上算「不适用 / not-found」，均属正常）：
-  - `Tesla Model 3 Test-Drive` 标题在 Linux 版**不存在为独立字符串**（Tesla 课程在，标题串缺失）；
-  - 3 条带前缀垃圾字符的句子（`EWe're going to fly…` / `?I'm gonna show you…` / `ALet's get going…`）
-    前一字节非 `0x00`，不是独立字符串起点，按「只认字符串起点」规则不打（Linux 版自身文案瑕疵）；
-  - `A touch-n-go is a landing…`、`Flaps up!`、`Flaps up! 120 knots…` 等在 Linux 版
-    不存在或只是长句前缀；
-  - `Brakes off!` 在 Linux 版只是长句 `Brakes off! That's the …` 的前缀：长句在表里排前面、
-    先被翻译成中文，等轮到短词条时已找不到原文 → 记 not-found；Windows 版它是独立字符串
-    （真实补丁报告里 patched），不受影响。最终字节正确（字幕显示的是那条长句的中文）。
+- **Linux 原生版差异**（共用表里这些词条在 Linux 上算「不适用 / not-found」，均属正常平台差异）：
+  - **12.4.4 Linux 的 13 条 not-found**：
+    - 4 个课程标题串在该 Linux 构建的二进制里**根本不存在**：`Cirrus Basic Handling` /
+      `Evolution Intro` / `Evolution Emergencies` / `Tesla Model 3 Test-Drive`（12.4.4 Linux
+      只保留 `Cirrus Intro` / `Cirrus Advanced Handling` / `Cirrus Landing` /
+      `Evolution Cross-Country` 4 个标题串；游戏内标题显示情况待实机确认，工具无事可做）；
+    - 4 条字幕在 ELF 里带垃圾前缀、不是独立字符串起点（` AHey there, it's Austin Meyer…`、
+      `ЄEOK let's learn how to get this Cirrus SR-22…`、`EWe're going to fly new maneuvers…`、
+      `ALet's get going. Gimme one notch of flaps.`）→ 按「只认字符串起点」规则不打；
+    - 4 条只是更长句的前缀 / 被长句先覆盖（`Brakes off!`、`Flaps up!`、`Flaps up! 120 knots…`、
+      `A touch-n-go is a landing…`），最终字节正确（显示的是长句的中文）；
+    - 1 条 Linux 版措辞不同（Linux 是 `That ITT is a bit low. Add some power…`，表里是 Windows 的
+      `ITT is a bit low…`）。
+  - **12.4.3 Linux 的 9 条 not-found**（历史记录）：Tesla 标题缺失、3 条垃圾前缀
+    （`EWe're…` / `?I'm gonna show you…` / `ALet's get going…`）、`A touch-n-go…`、`Flaps up!`、
+    `Flaps up! 120 knots…`、`Brakes off!` 等前缀/覆盖情形。
+- **12.4.4 兼容已完成（Windows PE + Linux 原生版）**：Windows 金标准 `8b3e1521…`
+  （513/8/0/0，786 段 / 45,097 字节）；Linux 原生金标准 `8b29f772…`（499/7/0/13，
+  771 段 / 44,475 字节）。12.4.4 Linux 缺 4 个课程标题串（见上条），需实机确认游戏里这些
+  标题的显示来源；若实机仍显示英文，再另行调研（超出本工具「只改字符串字节」的能力范围）。
 - **单一译文 + 字节上限**：每个词条只有一条译文（两平台一致）；`budget_bytes` 记录该条在
-  目标二进制里的最大可用字节数（Linux 原生版优先取最紧位置，Linux 无独立出现时取 Windows）。
+  目标二进制里的最大可用字节数（Windows 12.4.4 与 Linux 原生 12.4.3/12.4.4 取最紧位置）。
   改译文表时：中文 UTF-8 字节数必须 ≤ `budget_bytes`（自检会校验），改完务必跑 `--dry-run`
   并对副本做一次端到端验证（哈希要与清单一致）。不要再引入"完整版/短版"双译文机制。
 - **ARM64 产物未经实机验证**：`win-arm64` / `linux-arm64` 只在 GitHub ARM64 runner 上跑
@@ -381,7 +438,10 @@ git push origin v0.1.0
 
    每个 job：冒烟测试（核心自检 + GUI headless）→ 发布便携版 → 校验发布产物能启动（`--selftest`）→ 上传 artifact。
 2. `release` job 等四个 job 都成功后，下载全部 artifact、合并成一份 `SHA256SUMS.txt`，创建 Release 并挂上
-   4 个包（Windows 为 zip、Linux 为 tar.gz）与 `SHA256SUMS.txt`。
+   4 个包（Windows 为 zip、Linux 为 tar.gz）与 `SHA256SUMS.txt`。Release 说明正文 =
+   [`docs/release-notes.md`](docs/release-notes.md)（静态部分）+ `.github/render-compat-versions.py`
+   读 `compat/known-versions.json` 生成的**兼容版本表**（版本、平台、原版/补丁后 sha256 前 12 位、
+   验证日期），所以**新增兼容版本不需要手改 Release 说明**，改清单即可。
 3. tag 名里带 `-` 的（如 `v0.1.0-snapshot`）**自动标记为预发布**，不会顶掉“Latest release”。
 
 > **ARM64 runner 限制**：`windows-11-arm` / `ubuntu-24.04-arm` 这组标准 ARM64 runner

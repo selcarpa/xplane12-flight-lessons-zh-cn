@@ -48,6 +48,12 @@
 
 > 🎯 上面两个哈希是**跨平台一致性的金标准**：任何实现（Win/Linux）在 exe 副本上打完补丁都必须得到 `d021f265…`。
 
+> 📌 2026-11-16 更新：又兼容了 **12.4.4-r2 (build 124419)** 的 **Windows PE 与 Linux 原生版**：
+> Windows `X-Plane.exe` 55,022,152 字节、金标准 `8b3e1521…`（教学文本未变）；
+> Linux `X-Plane-x86_64` 78,659,600 字节、金标准 `8b29f772…`（13 条 not-found 属平台差异）。
+> 12.4.3 条目仍保留。最新实测数据以 [AGENT.md §1.1](AGENT.md) 与
+> `compat/known-versions.json` 为准。
+
 ### 2.2 Wine / Proton 场景
 
 | 事实 | 影响 |

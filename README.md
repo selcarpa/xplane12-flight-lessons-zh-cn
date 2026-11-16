@@ -100,7 +100,7 @@ chmod +x ~/apps/xpzhcn/XPlane12-FlightLessons-zh-CN
 ├─ XPlane12-FlightLessons-zh-CN.exe    主程序
 ├─ *.dll                               运行库（保持同目录，别单独挪走 exe）
 └─ .zh_cn_translate/                   自动生成
-   ├─ backup/  原版 exe 备份（每份约 87 MB）
+   ├─ backup/  原版 exe 备份（每份约 55–91 MB，取决于游戏版本）
    ├─ data/patch_report.tsv             逐条补丁结果
    ├─ log.txt                           运行日志（出问题时把这个发出来）
    └─ settings.json                      记住上次选的游戏目录
@@ -114,18 +114,25 @@ chmod +x ~/apps/xpzhcn/XPlane12-FlightLessons-zh-CN
 
 | 项目 | 当前支持 |
 |---|---|
-| X-Plane 12 | **12.4.3-r2 (build 124311)** —— 唯一验证版本（Windows PE 与 Linux 原生 ELF 各一条） |
-| Windows 版 `X-Plane.exe` sha256 | `2ca099b7c6b218e78d02bdbe298be2aebf670b67c5adff827449b065e1107936` |
-| Windows 版打完补丁 sha256 | `d021f2656852416686e9f9c6222db90111ef791eea7967c839ade03e2e7efdbb` |
-| Windows 版 exe 大小 | 91,132,488 字节（打补丁前后不变） |
-| Linux 原生版 `X-Plane-x86_64` sha256 | `0fe6bc5c5d661633840bc5eba0de88d8def190f1ff40f6a7011d9252cc63eabb` |
-| Linux 原生版打完补丁 sha256 | `52218d9089e491f496bf96701989ab5b0a83eb76061086b21e0b9d786b88480e` |
-| Linux 原生版 exe 大小 | 76,056,352 字节（打补丁前后不变） |
+| X-Plane 12 | **12.4.4-r2 (build 124419)** 与 **12.4.3-r2 (build 124311)**；Windows 版与 Linux 原生版均已支持 |
+| Windows 12.4.4 `X-Plane.exe` 原版 sha256 | `5b18cc7d406bdf22be20135849b8705622cef6882edbb6e8d7c54e095b712563` |
+| Windows 12.4.4 打完补丁 sha256 | `8b3e152150043b9f7e32ee520d895354e537fc5eb5c418aa39e0048b0ecfabb7` |
+| Windows 12.4.4 exe 大小 | 55,022,152 字节（打补丁前后不变） |
+| Windows 12.4.3 原版 sha256 | `2ca099b7c6b218e78d02bdbe298be2aebf670b67c5adff827449b065e1107936` |
+| Windows 12.4.3 打完补丁 sha256 | `d021f2656852416686e9f9c6222db90111ef791eea7967c839ade03e2e7efdbb` |
+| Windows 12.4.3 exe 大小 | 91,132,488 字节（打补丁前后不变） |
+| Linux 12.4.4 `X-Plane-x86_64` 原版 sha256 | `565ac3942e952794d5625e04b2147543f2fca2f027942f5f205d142e52728fce` |
+| Linux 12.4.4 打完补丁 sha256 | `8b29f772ce110ba9df92335de14f181be487faedb7ce8aa02acbfc11feca295f` |
+| Linux 12.4.4 exe 大小 | 78,659,600 字节（打补丁前后不变） |
+| Linux 12.4.3 原版 sha256 | `0fe6bc5c5d661633840bc5eba0de88d8def190f1ff40f6a7011d9252cc63eabb` |
+| Linux 12.4.3 打完补丁 sha256 | `52218d9089e491f496bf96701989ab5b0a83eb76061086b21e0b9d786b88480e` |
+| Linux 12.4.3 exe 大小 | 76,056,352 字节（打补丁前后不变） |
 | Windows | Windows 10 1809+ / 11，x64 与 ARM64（自包含，无需装 .NET） |
 | Linux | 桌面发行版 + Steam/Proton，或 SteamOS 桌面模式；**Linux 原生版直接支持**；提供 x64 与 ARM64 包 |
 | ARM64（Windows on ARM / ARM64 Linux） | ⚠️ 提供 `win-arm64` / `linux-arm64` 包，但**未经实机测试**（作者无 ARM 硬件，见上文说明） |
 
 兼容信息全部记录在 [`compat/known-versions.json`](compat/known-versions.json)。
+每次 Release 的说明里会自动列出「兼容版本」表（版本、平台、原版/补丁后 sha256、验证日期）。
 游戏更新后如果要支持新版本，改这个清单即可（见 [AGENT.md](AGENT.md)）。
 
 ---

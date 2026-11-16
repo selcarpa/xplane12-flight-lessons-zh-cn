@@ -1,8 +1,50 @@
 {
   "schemaVersion": 1,
   "note": "X-Plane 12 可执行文件兼容清单。sha256 为原版（Windows 版 X-Plane.exe 或 Linux 原生版 X-Plane-x86_64）的哈希；打补丁后的哈希用于结果校验。未列入的版本需要在二次确认后才会打补丁。",
-  "updatedAt": "2026-11-15",
+  "updatedAt": "2026-11-16",
   "versions": [
+    {
+      "id": "12.4.4-r2-124419",
+      "displayName": "X-Plane 12.4.4-r2 (build 124419)",
+      "status": "verified",
+      "exeSize": 55022152,
+      "sha256": "5b18cc7d406bdf22be20135849b8705622cef6882edbb6e8d7c54e095b712563",
+      "patchedSha256": "8b3e152150043b9f7e32ee520d895354e537fc5eb5c418aa39e0048b0ecfabb7",
+      "regionStart": 42825408,
+      "regionEnd": 42911160,
+      "candidates": 582,
+      "entries": 513,
+      "patchStats": {
+        "patched": 513,
+        "skipped": 8,
+        "tooLong": 0,
+        "notFound": 0
+      },
+      "platforms": [ "windows", "linux-wine" ],
+      "verifiedOn": "2026-11-16",
+      "notes": "Windows 版（X-Plane.exe，12.4.4-r2-e8642cec）。Linux 侧指 Steam/Proton(Wine) 运行同一个 X-Plane.exe。12.4.4 起 exe 体积由 91,132,488 降为 55,022,152 字节，教学文本内容未变（513 条全部命中）；区间内候选字符串 582 条（区间边界随编译布局变化，与 12.4.3 的 621 条不可直接比较）。"
+    },
+    {
+      "id": "12.4.4-r2-124419-linux-native",
+      "displayName": "X-Plane 12.4.4-r2 (build 124419) Linux 原生版",
+      "status": "verified",
+      "exeSize": 78659600,
+      "sha256": "565ac3942e952794d5625e04b2147543f2fca2f027942f5f205d142e52728fce",
+      "patchedSha256": "8b29f772ce110ba9df92335de14f181be487faedb7ce8aa02acbfc11feca295f",
+      "regionStart": 49594154,
+      "regionEnd": 49647601,
+      "candidates": 649,
+      "entries": 513,
+      "patchStats": {
+        "patched": 499,
+        "skipped": 7,
+        "tooLong": 0,
+        "notFound": 13
+      },
+      "platforms": [ "linux-native" ],
+      "verifiedOn": "2026-11-16",
+      "notes": "Linux 原生版（X-Plane-x86_64，ELF，12.4.4-r2-e8642cec，Compiled on Nov 9 2026）。与 Windows 共用同一张译文表 translations/zh.csv（单一译文 + 每条字节上限）。13 条 not-found 属平台差异：4 个课程标题串在 12.4.4 Linux 构建里不存在（Cirrus Basic Handling / Evolution Intro / Evolution Emergencies / Tesla Model 3 Test-Drive）；4 条句子在 ELF 里带垃圾前缀（AHey there… / ЄEOK let's learn… / EWe're going to fly… / ALet's get going…，不是独立字符串起点）；Brakes off! / Flaps up! / Flaps up! 120 knots… / A touch-n-go… 只是更长句的前缀或被长句先覆盖；1 条 Linux 版措辞不同（That ITT is a bit low…）。"
+    },
     {
       "id": "12.4.3-r2-124311",
       "displayName": "X-Plane 12.4.3-r2 (build 124311)",

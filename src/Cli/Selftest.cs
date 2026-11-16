@@ -253,29 +253,76 @@ public static class Selftest
     {
         Console.WriteLine("compat_manifest");
         var manifest = CompatManifest.Load(null);
-        Check(manifest.Versions.Count >= 2, $"清单里有 {manifest.Versions.Count} 个版本（Windows + Linux 原生）");
+        Check(manifest.Versions.Count >= 4, $"清单里有 {manifest.Versions.Count} 个版本（Windows / Linux 原生各 12.4.4 + 12.4.3）");
 
-        var windows = manifest.Versions[0];
-        Check(windows.ExeSize == 91132488, $"Windows 版 exe 大小 {windows.ExeSize:N0}");
-        Check(windows.Sha256 == "2ca099b7c6b218e78d02bdbe298be2aebf670b67c5adff827449b065e1107936", "Windows 版原版 sha256 正确");
-        Check(windows.PatchedSha256 == "d021f2656852416686e9f9c6222db90111ef791eea7967c839ade03e2e7efdbb", "Windows 版补丁后 sha256 正确");
-        Check(windows.Entries == 513, $"Windows 版词条数 {windows.Entries}");
-        Check(windows.IsVerified, "Windows 版状态为 verified");
-
-        var linux = manifest.FindByOriginal("0fe6bc5c5d661633840bc5eba0de88d8def190f1ff40f6a7011d9252cc63eabb");
-        Check(linux is not null, "能按 Linux 原生版原版哈希查到");
-        if (linux is not null)
+        // 最新 Windows 版本：12.4.4-r2 (build 124419)
+        var windows1244 = manifest.FindByOriginal("5b18cc7d406bdf22be20135849b8705622cef6882edbb6e8d7c54e095b712563");
+        Check(windows1244 is not null, "能按 Windows 12.4.4 原版哈希查到");
+        if (windows1244 is not null)
         {
-            Check(linux.ExeSize == 76056352, $"Linux 版 exe 大小 {linux.ExeSize:N0}");
-            Check(linux.PatchedSha256 == "52218d9089e491f496bf96701989ab5b0a83eb76061086b21e0b9d786b88480e", "Linux 版补丁后 sha256 正确");
-            Check(linux.Entries == 513, $"Linux 版词条数 {linux.Entries}（共用同一张表）");
-            Check(linux.IsVerified, "Linux 版状态为 verified");
-            Check(linux.PatchStats is not null && linux.PatchStats.TooLong == 0, "Linux 版没有放不下的译文");
+            Check(windows1244.ExeSize == 55022152, $"Windows 12.4.4 exe 大小 {windows1244.ExeSize:N0}");
+            Check(windows1244.PatchedSha256 == "8b3e152150043b9f7e32ee520d895354e537fc5eb5c418aa39e0048b0ecfabb7", "Windows 12.4.4 补丁后 sha256 正确");
+            Check(windows1244.RegionStart == 42825408 && windows1244.RegionEnd == 42911160, $"Windows 12.4.4 文本区间 {windows1244.RegionStart}..{windows1244.RegionEnd}");
+            Check(windows1244.Candidates == 582, $"Windows 12.4.4 区间内候选字符串 {windows1244.Candidates}");
+            Check(windows1244.Entries == 513, $"Windows 12.4.4 词条数 {windows1244.Entries}");
+            Check(windows1244.IsVerified, "Windows 12.4.4 状态为 verified");
+            Check(windows1244.PatchStats is not null &&
+                  windows1244.PatchStats.Patched == 513 &&
+                  windows1244.PatchStats.Skipped == 8 &&
+                  windows1244.PatchStats.TooLong == 0 &&
+                  windows1244.PatchStats.NotFound == 0,
+                "Windows 12.4.4 补丁统计 513/8/0/0");
         }
 
-        Check(manifest.FindByOriginal(windows.Sha256) is not null, "能按 Windows 原版哈希查到");
-        Check(manifest.FindByPatched(windows.PatchedSha256) is not null, "能按 Windows 补丁后哈希查到");
-        Check(manifest.FindByPatched(linux?.PatchedSha256 ?? "") is not null, "能按 Linux 补丁后哈希查到");
+        // 旧版 Windows：12.4.3-r2 (build 124311)，仍保留在清单里继续支持
+        var windows1243 = manifest.FindByOriginal("2ca099b7c6b218e78d02bdbe298be2aebf670b67c5adff827449b065e1107936");
+        Check(windows1243 is not null, "能按 Windows 12.4.3 原版哈希查到");
+        if (windows1243 is not null)
+        {
+            Check(windows1243.ExeSize == 91132488, $"Windows 12.4.3 exe 大小 {windows1243.ExeSize:N0}");
+            Check(windows1243.PatchedSha256 == "d021f2656852416686e9f9c6222db90111ef791eea7967c839ade03e2e7efdbb", "Windows 12.4.3 补丁后 sha256 正确");
+            Check(windows1243.Entries == 513, $"Windows 12.4.3 词条数 {windows1243.Entries}");
+            Check(windows1243.IsVerified, "Windows 12.4.3 状态为 verified");
+        }
+
+        // 最新 Linux 原生版：12.4.4-r2 (build 124419)
+        var linux1244 = manifest.FindByOriginal("565ac3942e952794d5625e04b2147543f2fca2f027942f5f205d142e52728fce");
+        Check(linux1244 is not null, "能按 Linux 原生版 12.4.4 原版哈希查到");
+        if (linux1244 is not null)
+        {
+            Check(linux1244.ExeSize == 78659600, $"Linux 12.4.4 exe 大小 {linux1244.ExeSize:N0}");
+            Check(linux1244.PatchedSha256 == "8b29f772ce110ba9df92335de14f181be487faedb7ce8aa02acbfc11feca295f", "Linux 12.4.4 补丁后 sha256 正确");
+            Check(linux1244.RegionStart == 49594154 && linux1244.RegionEnd == 49647601, $"Linux 12.4.4 文本区间 {linux1244.RegionStart}..{linux1244.RegionEnd}");
+            Check(linux1244.Candidates == 649, $"Linux 12.4.4 区间内候选字符串 {linux1244.Candidates}");
+            Check(linux1244.Entries == 513, $"Linux 12.4.4 词条数 {linux1244.Entries}（共用同一张表）");
+            Check(linux1244.IsVerified, "Linux 12.4.4 状态为 verified");
+            Check(linux1244.PatchStats is not null &&
+                  linux1244.PatchStats.Patched == 499 &&
+                  linux1244.PatchStats.Skipped == 7 &&
+                  linux1244.PatchStats.TooLong == 0 &&
+                  linux1244.PatchStats.NotFound == 13,
+                "Linux 12.4.4 补丁统计 499/7/0/13");
+        }
+
+        // 旧版 Linux 原生版：12.4.3-r2 (build 124311)，仍保留在清单里继续支持
+        var linux = manifest.FindByOriginal("0fe6bc5c5d661633840bc5eba0de88d8def190f1ff40f6a7011d9252cc63eabb");
+        Check(linux is not null, "能按 Linux 原生版 12.4.3 原版哈希查到");
+        if (linux is not null)
+        {
+            Check(linux.ExeSize == 76056352, $"Linux 12.4.3 exe 大小 {linux.ExeSize:N0}");
+            Check(linux.PatchedSha256 == "52218d9089e491f496bf96701989ab5b0a83eb76061086b21e0b9d786b88480e", "Linux 12.4.3 补丁后 sha256 正确");
+            Check(linux.Entries == 513, $"Linux 12.4.3 词条数 {linux.Entries}（共用同一张表）");
+            Check(linux.IsVerified, "Linux 12.4.3 状态为 verified");
+            Check(linux.PatchStats is not null && linux.PatchStats.TooLong == 0, "Linux 12.4.3 没有放不下的译文");
+        }
+
+        Check(manifest.FindByOriginal(windows1244?.Sha256 ?? "") is not null, "能按 Windows 12.4.4 原版哈希查到");
+        Check(manifest.FindByPatched(windows1244?.PatchedSha256 ?? "") is not null, "能按 Windows 12.4.4 补丁后哈希查到");
+        Check(manifest.FindByOriginal(windows1243?.Sha256 ?? "") is not null, "能按 Windows 12.4.3 原版哈希查到");
+        Check(manifest.FindByPatched(windows1243?.PatchedSha256 ?? "") is not null, "能按 Windows 12.4.3 补丁后哈希查到");
+        Check(manifest.FindByOriginal(linux1244?.Sha256 ?? "") is not null, "能按 Linux 12.4.4 原版哈希查到");
+        Check(manifest.FindByPatched(linux1244?.PatchedSha256 ?? "") is not null, "能按 Linux 12.4.4 补丁后哈希查到");
+        Check(manifest.FindByPatched(linux?.PatchedSha256 ?? "") is not null, "能按 Linux 12.4.3 补丁后哈希查到");
         Check(manifest.FindByOriginal("deadbeef") is null, "未知哈希查不到（需要二次确认）");
     }
 

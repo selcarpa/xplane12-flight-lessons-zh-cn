@@ -16,3 +16,6 @@ dist/
 # Python 归档目录的缓存（旧的 Python 实现已删除，保留以防遗留）
 __pycache__/
 *.py[cod]
+
+# 本地调研/生成工具（不入库）
+.tools/
