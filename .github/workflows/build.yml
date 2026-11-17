@@ -21,18 +21,14 @@ jobs:
         include:
           - os: windows-latest
             rid: win-x64
-            artifact: XPlane12-FlightLessons-zh-CN-win-x64
           # Windows on ARM（骁龙 X 等 ARM64 PC）。arm64 runner 只对公共仓库免费可用
           - os: windows-11-arm
             rid: win-arm64
-            artifact: XPlane12-FlightLessons-zh-CN-win-arm64
           - os: ubuntu-latest
             rid: linux-x64
-            artifact: XPlane12-FlightLessons-zh-CN-linux-x64
           # Linux ARM64（ARMv8-A / arm64-v8a）。arm64 runner 只对公共仓库免费可用
           - os: ubuntu-24.04-arm
             rid: linux-arm64
-            artifact: XPlane12-FlightLessons-zh-CN-linux-arm64
 
     steps:
       - uses: actions/checkout@v4
@@ -52,18 +48,22 @@ jobs:
       - name: 冒烟测试（核心逻辑 + GUI headless）
         run: dotnet run --project tests/SmokeTests/SmokeTests.csproj -c Release
 
-      - name: 发布便携版（自包含，原生库与 exe 同目录）
-        run: >
-          dotnet publish src/XpLessonZhCN.csproj -c Release -r ${{ matrix.rid }}
-          --self-contained true
-          -p:PublishSingleFile=true
-          -p:IncludeNativeLibrariesForSelfExtract=false
-          -p:EnableCompressionInSingleFile=true
-          -p:DebugType=none
-          -p:Version=${{ env.APP_VERSION }}
-          -o dist/${{ matrix.rid }}
+      # 构建 + 发布 + 打包 + 生成 SHA256SUMS 全部交给 scripts/ 下的脚本，
+      # publish 参数与产物文件名规则只在 scripts/lib/build-common.props 里定义一次，
+      # workflow 不再内联复制（版本号由上面的步骤算出后透传给脚本）。
+      - name: 构建并打包（Windows）
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: pwsh -NoProfile -ExecutionPolicy Bypass -File ./scripts/build.ps1 -SkipTests -Rid '${{ matrix.rid }}' -Version '${{ env.APP_VERSION }}'
 
+      - name: 构建并打包（Linux）
+        if: runner.os == 'Linux'
+        shell: bash
+        run: bash ./scripts/build.sh --skip-tests --rid '${{ matrix.rid }}' --version '${{ env.APP_VERSION }}'
 
+      # 说明：下面这一步是对「publish 之后的单文件产物」再跑一次 --selftest，
+      # 与上面冒烟测试里的 Selftest.Run() 语义不同（前者验证发布产物能独立启动），
+      # 因此不能当成重复步骤删掉。
       - name: 校验发布产物能启动（Windows）
         if: runner.os == 'Windows'
         shell: pwsh
@@ -80,46 +80,17 @@ jobs:
           chmod +x "$exe"
           "$exe" --selftest
 
-      - name: 打包（Windows）
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          Copy-Item docs/使用说明.md dist/${{ matrix.rid }}/使用说明.md
-          # 空文件，提醒先解压再运行（压缩包内直接双击 exe 会失败）
-          [System.IO.File]::WriteAllBytes("dist/${{ matrix.rid }}/[解压后再运行]", @())
-          Compress-Archive -Path "dist/${{ matrix.rid }}/*" -DestinationPath "dist/${{ matrix.artifact }}.zip"
-
-      - name: 打包（Linux）
-        if: runner.os == 'Linux'
-        run: |
-          cd dist/${{ matrix.rid }}
-          chmod +x XPlane12-FlightLessons-zh-CN
-          cp ../../docs/使用说明.md 使用说明.md
-          tar czf "../${{ matrix.artifact }}.tar.gz" *
-
-      - name: 生成 SHA256SUMS
-        shell: bash
-        run: |
-          cd dist
-          : > SHA256SUMS-${{ matrix.rid }}.txt
-          for f in *; do
-            case "$f" in
-              *.zip|*.tar.gz) ;;
-              *) continue ;;
-            esac
-            if command -v sha256sum >/dev/null; then sha256sum "$f" >> SHA256SUMS-${{ matrix.rid }}.txt
-            else shasum -a 256 "$f" >> SHA256SUMS-${{ matrix.rid }}.txt; fi
-          done
-          cat SHA256SUMS-${{ matrix.rid }}.txt
-
+      # 打包与 SHA256SUMS 已在上面的「构建并打包」步骤里由脚本完成：
+      #   Windows → dist/XPlane12-FlightLessons-zh-CN-<rid>.zip + dist/SHA256SUMS-<rid>.txt
+      #   Linux   → dist/XPlane12-FlightLessons-zh-CN-<rid>.tar.gz + dist/SHA256SUMS-<rid>.txt
+      # 文件名规则来自 scripts/lib/build-common.props（APP_BASENAME-<rid>）。
       - name: 上传产物
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.artifact }}
+          name: XPlane12-FlightLessons-zh-CN-${{ matrix.rid }}
           path: |
-            dist/${{ matrix.artifact }}.zip
-            dist/${{ matrix.artifact }}.tar.gz
-
+            dist/XPlane12-FlightLessons-zh-CN-${{ matrix.rid }}.zip
+            dist/XPlane12-FlightLessons-zh-CN-${{ matrix.rid }}.tar.gz
             dist/SHA256SUMS-${{ matrix.rid }}.txt
 
   # 单独一个 job 汇总四个平台后再发布，避免多个矩阵 job 并发创建同一个 Release
@@ -152,9 +123,9 @@ jobs:
       - name: 生成 Release 说明（含兼容版本列表）
         shell: bash
         run: |
-          cat docs/release-notes.md > release-notes.md
+          cat docs/release/release-notes.md > release-notes.md
           echo >> release-notes.md
-          python3 .github/render-compat-versions.py >> release-notes.md
+          python3 scripts/tools/render-compat-versions.py >> release-notes.md
           echo '--- release-notes.md ---'
           cat release-notes.md
 
@@ -164,7 +135,7 @@ jobs:
           name: X-Plane 12 飞行教学汉化 ${{ github.ref_name }}
           # tag 名里带 - 的（如 v0.1.0-snapshot）自动标为预发布
           prerelease: ${{ contains(github.ref_name, '-') }}
-          # 正文 = docs/release-notes.md + 由 compat/known-versions.json 自动生成的「兼容版本」表
+          # 正文 = docs/release/release-notes.md + 由 compat/known-versions.json 自动生成的「兼容版本」表
           body_path: release-notes.md
           files: |
             artifacts/*.zip

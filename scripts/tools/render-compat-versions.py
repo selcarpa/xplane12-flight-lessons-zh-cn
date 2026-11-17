@@ -3,7 +3,7 @@
 
 CI 的 release job 调用它并把输出追加到 Release 说明末尾；本地可以这样预览：
 
-    python3 .github/render-compat-versions.py
+    python3 scripts/tools/render-compat-versions.py
 
 新增兼容版本只需要改 compat/known-versions.json，Release 说明会自动跟着更新。
 """
@@ -13,7 +13,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-MANIFEST = Path(__file__).resolve().parent.parent / "compat" / "known-versions.json"
+# 本脚本位于 scripts/tools/，仓库根是它的上上级
+MANIFEST = Path(__file__).resolve().parents[2] / "compat" / "known-versions.json"
 
 PLATFORM_LABELS = {
     "windows": "Windows PE",

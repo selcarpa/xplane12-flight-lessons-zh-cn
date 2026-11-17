@@ -21,6 +21,7 @@
         "notFound": 0
       },
       "platforms": [ "windows", "linux-wine" ],
+      "steamBranch": "public",
       "verifiedOn": "2026-11-16",
       "notes": "Windows 版（X-Plane.exe，12.4.4-r2-e8642cec）。Linux 侧指 Steam/Proton(Wine) 运行同一个 X-Plane.exe。12.4.4 起 exe 体积由 91,132,488 降为 55,022,152 字节，教学文本内容未变（513 条全部命中）；区间内候选字符串 582 条（区间边界随编译布局变化，与 12.4.3 的 621 条不可直接比较）。"
     },
@@ -42,6 +43,7 @@
         "notFound": 9
       },
       "platforms": [ "linux-native" ],
+      "steamBranch": "public",
       "verifiedOn": "2026-11-16",
       "notes": "Linux 原生版（X-Plane-x86_64，ELF，12.4.4-r2-e8642cec，Compiled on Nov 9 2026）。与 Windows 共用同一张译文表 translations/zh.csv（单一译文 + 每条字节上限）。句首带垃圾数据/残字的 5 条字幕（Hey there… / OK let's learn… / We're going to fly… / Let's get going… / Let's do a touch-n-go.）由引擎的宽松兜底从英文原文处写入（后者是把译文收紧到 22 字节后才放得下）；其余 9 条 not-found 属平台差异：4 个课程标题串在 12.4.4 Linux 构建里不存在（Cirrus Basic Handling / Evolution Intro / Evolution Emergencies / Tesla Model 3 Test-Drive）；Brakes off! / Flaps up! / Flaps up! 120 knots… / A touch-n-go… 只是更长句的前缀或被长句先覆盖；1 条 Linux 版措辞差异（ITT is a bit low. Add some power…）已由 That ITT… 词条覆盖显示。详见 AGENT.md §9。"
     },
@@ -63,6 +65,7 @@
         "notFound": 0
       },
       "platforms": [ "windows", "linux-wine" ],
+      "steamBranch": "previous_release",
       "verifiedOn": "2026-11-15",
       "notes": "Windows 版（X-Plane.exe）。Linux 侧指 Steam/Proton(Wine) 运行同一个 X-Plane.exe；译文表 translations/zh.csv（与 Linux 原生版同一条译文）。"
     },
@@ -84,6 +87,7 @@
         "notFound": 6
       },
       "platforms": [ "linux-native" ],
+      "steamBranch": "previous_release",
       "verifiedOn": "2026-11-15",
       "notes": "Linux 原生版（X-Plane-x86_64，ELF）。与 Windows 共用同一张译文表 translations/zh.csv（单一译文 + 每条字节上限，两平台显示一致）。句首带垃圾数据的 4 条字幕（We're going to fly… / I'm gonna show you… / Let's get going… / Let's do a touch-n-go.）由引擎的宽松兜底从英文原文处写入；6 条 not-found 为长句前缀/被覆盖情形（Brakes off!、Flaps up!、Flaps up! 120 knots…、A touch-n-go…、Tesla 标题、ITT 短句由 That ITT… 词条覆盖），属正常平台差异。"
     }

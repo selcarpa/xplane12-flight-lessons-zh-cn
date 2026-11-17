@@ -1,0 +1,19 @@
+# scripts/lib/build-common.props —— 构建脚本共享配置（单一事实源）
+#
+# 格式：KEY=VALUE（一行一个，值里不含空格），供两个构建脚本共同读取：
+#   scripts/build.sh   —— bash 直接 source 本文件
+#   scripts/build.ps1  —— PowerShell 用 [System.IO.File]::ReadAllLines 解析
+#
+# 说明：publish 的 MSBuild 属性、产物文件名规则、随包文档路径都只在这里定义一次，
+# CI（.github/workflows/build.yml）不再内联复制，只负责传 rid 与版本号。
+
+# 产物文件名主干：最终产物名 = <APP_BASENAME>-<rid>.tar.gz / .zip
+APP_BASENAME=XPlane12-FlightLessons-zh-CN
+
+# dotnet publish 的 MSBuild 属性；"," 分隔（不能是 ";"，bash source 时会被当成命令分隔符），
+# 每项形如 <键>=<值>，脚本转成 -p:<键>=<值>
+PUBLISH_PROPS=PublishSingleFile=true,IncludeNativeLibrariesForSelfExtract=false,EnableCompressionInSingleFile=true,DebugType=none
+
+# 随包附带的用户说明（仓库根相对路径 / 放进包里的文件名）
+USER_GUIDE=docs/user/使用说明.md
+USER_GUIDE_NAME=使用说明.md
