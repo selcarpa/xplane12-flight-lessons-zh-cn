@@ -1,0 +1,63 @@
+{
+  "name": "X-Plane 12 汉化工具 (.NET 9 + DepotDownloader)",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/dotnet:1": {
+      "version": "9.0"
+    },
+    "ghcr.io/devcontainers/features/common-utils:1": {}
+  },
+  "customizations": {
+    "codespaces": {
+      "repo": {
+        "display_name": "X-Plane 12 飞行教学汉化",
+        "description": ".NET 9 + Avalonia 11.3 桌面补丁工具的云端开发环境，内置 DepotDownloader 可按需取回 X-Plane 12 的可执行文件做端到端验证"
+      },
+      "retentionPeriod": "7 days",
+      "idleTimeoutMinutes": 30,
+      "openFiles": [
+        "AGENT.md",
+        "README.md"
+      ]
+    },
+    "vscode": {
+      "extensions": [
+        "ms-dotnettools.csharp",
+        "ms-dotnettools.csdevkit",
+        "editorconfig.editorconfig"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  },
+  "remoteUser": "vscode",
+  "containerEnv": {
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "DOTNET_NOLOGO": "1",
+    "DOTNET_SKIP_FIRST_TIME_EXPERIENCE": "1"
+  },
+  "mounts": [
+    {
+      "source": "xpzhcn-nuget",
+      "target": "/home/vscode/.nuget/packages",
+      "type": "volume"
+    },
+    {
+      "source": "xpzhcn-steam-session",
+      "target": "/home/vscode/.local/share",
+      "type": "volume"
+    }
+  ],
+  "postCreateCommand": "bash .devcontainer/postCreate.sh",
+  "postStartCommand": "bash .devcontainer/postStart.sh",
+  "portsAttributes": {
+    "5901": {
+      "label": "预留端口（非 Web 服务）",
+      "onAutoForward": "ignore"
+    }
+  }
+}
