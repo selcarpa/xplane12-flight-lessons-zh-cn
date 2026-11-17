@@ -9,7 +9,7 @@
 
 > Austin 的录音仍是英文；本工具汉化的是**字幕**和**课程标题**。
 
-> **只想打补丁？** 看 [使用说明](docs/使用说明.md) —— 3 步，一页看完。
+> **只想打补丁？** 看 [使用说明](docs/user/使用说明.md) —— 3 步，一页看完。
 
 ---
 
@@ -27,10 +27,7 @@
 > 不确定就选 x64：绝大多数电脑都是 x64。ARM64 包只在 ARM 系统上使用；
 > X-Plane 12 游戏本体仍是 x64（Windows on ARM 下由系统模拟运行）。
 
-> ⚠️ **ARM64 包未经实机测试（实验性）**：作者没有 Windows on ARM / ARM64 Linux 硬件，
-> `win-arm64` / `linux-arm64` 只通过 CI 的冒烟测试与 `--selftest`（合成数据），没有在真实
-> ARM 设备上运行过，也没有对真实游戏目录打过补丁。在 ARM 设备上使用前请先备份原版，
-> 建议先用「预演（不写盘）」/ `--dry-run` 确认；遇到问题欢迎反馈。
+> ⚠️ **ARM64 包未经实机测试（实验性）**，详情见 [AGENT.md §9](AGENT.md)。
 
 ### Windows
 
@@ -43,14 +40,7 @@
 
 ### Linux（Steam / Proton 与 Linux 原生版）
 
-```bash
-# 按你的架构二选一：
-tar xzf XPlane12-FlightLessons-zh-CN-linux-x64.tar.gz -C ~/apps/xpzhcn   # x64
-# tar xzf XPlane12-FlightLessons-zh-CN-linux-arm64.tar.gz -C ~/apps/xpzhcn  # ARM64（ARMv8-A / arm64-v8a）
-
-chmod +x ~/apps/xpzhcn/XPlane12-FlightLessons-zh-CN
-~/apps/xpzhcn/XPlane12-FlightLessons-zh-CN
-```
+解压与运行命令见 [使用说明](docs/user/使用说明.md) 的「Linux」一节（随包发布）。
 
 程序会自动检测游戏目录里的可执行文件类型：
 
@@ -115,23 +105,12 @@ chmod +x ~/apps/xpzhcn/XPlane12-FlightLessons-zh-CN
 | 项目 | 当前支持 |
 |---|---|
 | X-Plane 12 | **12.4.4-r2 (build 124419)** 与 **12.4.3-r2 (build 124311)**；Windows 版与 Linux 原生版均已支持 |
-| Windows 12.4.4 `X-Plane.exe` 原版 sha256 | `5b18cc7d406bdf22be20135849b8705622cef6882edbb6e8d7c54e095b712563` |
-| Windows 12.4.4 打完补丁 sha256 | `ae57d6197d44d0bcfa4cc1017c1caccc762338871a483745a965e18591b78a3b` |
-| Windows 12.4.4 exe 大小 | 55,022,152 字节（打补丁前后不变） |
-| Windows 12.4.3 原版 sha256 | `2ca099b7c6b218e78d02bdbe298be2aebf670b67c5adff827449b065e1107936` |
-| Windows 12.4.3 打完补丁 sha256 | `deebc68ee5d3fe5adb33031a105d61d62c4554dd882b1bae88f7705fdc90ec5e` |
-| Windows 12.4.3 exe 大小 | 91,132,488 字节（打补丁前后不变） |
-| Linux 12.4.4 `X-Plane-x86_64` 原版 sha256 | `565ac3942e952794d5625e04b2147543f2fca2f027942f5f205d142e52728fce` |
-| Linux 12.4.4 打完补丁 sha256 | `257cdd957852f9065c8a2c1bf4e769198615189d081ac79c3e63adb4dbf632da` |
-| Linux 12.4.4 exe 大小 | 78,659,600 字节（打补丁前后不变） |
-| Linux 12.4.3 原版 sha256 | `0fe6bc5c5d661633840bc5eba0de88d8def190f1ff40f6a7011d9252cc63eabb` |
-| Linux 12.4.3 打完补丁 sha256 | `b34e075c300ed61174fba79fe7ddab4d2bdb4756597715fd1f15726d1855a5c2` |
-| Linux 12.4.3 exe 大小 | 76,056,352 字节（打补丁前后不变） |
 | Windows | Windows 10 1809+ / 11，x64 与 ARM64（自包含，无需装 .NET） |
 | Linux | 桌面发行版 + Steam/Proton，或 SteamOS 桌面模式；**Linux 原生版直接支持**；提供 x64 与 ARM64 包 |
-| ARM64（Windows on ARM / ARM64 Linux） | ⚠️ 提供 `win-arm64` / `linux-arm64` 包，但**未经实机测试**（作者无 ARM 硬件，见上文说明） |
+| ARM64（Windows on ARM / ARM64 Linux） | ⚠️ 提供 `win-arm64` / `linux-arm64` 包，但**未经实机测试**（见 [AGENT.md §9](AGENT.md)） |
 
-兼容信息全部记录在 [`compat/known-versions.json`](compat/known-versions.json)。
+兼容信息（exe 大小、原版/补丁后 sha256、验证日期等）全部记录在
+[`compat/known-versions.json`](compat/known-versions.json)，人读版见 [AGENT.md §1.1](AGENT.md)。
 每次 Release 的说明里会自动列出「兼容版本」表（版本、平台、原版/补丁后 sha256、验证日期）。
 游戏更新后如果要支持新版本，改这个清单即可（见 [AGENT.md](AGENT.md)）。
 
@@ -229,17 +208,28 @@ XPlane12-FlightLessons-zh-CN --path "/path/to/X-Plane 12" --check
 
 ```powershell
 # Windows
-.\build.ps1
+.\scripts\build.ps1
 ```
 
 ```bash
 # Linux
-./build.sh
+./scripts/build.sh
 ```
 
 产物在 `dist/`。CI（GitHub Actions）会在四个原生 runner 上分别构建并跑冒烟测试
 （`win-x64` / `win-arm64` / `linux-x64` / `linux-arm64`），见
 [`.github/workflows/build.yml`](.github/workflows/build.yml)。
+
+### GitHub Codespaces（云端开发环境）
+
+仓库内置了 [`.devcontainer/`](.devcontainer/) 配置（.NET 9 SDK + DepotDownloader），
+在仓库页面点 **Code → Codespaces → Create codespace on main** 即可开箱。
+用法与下载 X-Plane 12 可执行文件的步骤详见
+**[.devcontainer/README.md](.devcontainer/README.md)**。
+
+取回 Steam 上的可执行文件需要登录态：本地人工登录一次生成 `account.config`，
+再部署到目标机，之后即可无人值守下载 —— 流程见
+**[docs/ops/steam-auth.md](docs/ops/steam-auth.md)**。
 
 ---
 
@@ -254,9 +244,15 @@ XPlane12-FlightLessons-zh-CN --path "/path/to/X-Plane 12" --check
 │  └─ Gui/                       Avalonia 图形界面
 ├─ translations/zh.csv           译文表（Windows 与 Linux 原生版共用，构建时嵌入 exe；
 │                                列：english, chinese, budget_bytes 字节上限）
-├─ compat/known-versions.json    兼容清单（sha256 → 版本信息，Windows 与 Linux 各一条）
+├─ compat/known-versions.json    兼容清单（sha256 → 版本信息；每个平台 12.4.4 / 12.4.3 各一条，共 4 条）
 ├─ tests/SmokeTests/             冒烟测试（核心逻辑 + GUI headless）
-├─ PLAN.md                         方案与设计决策
+├─ scripts/                      构建与工具脚本（build.*、steam-* 认证与下载、tools/）
+├─ docs/                         文档（按读者分类，索引见 docs/README.md）
+│  ├─ user/                      使用说明（随包发布）
+│  ├─ maintainer/                开发指南（目录规划 / 研发路径 / 脚手架）与历史方案
+│  ├─ ops/                       Steam 认证与自动下载运维
+│  └─ release/                   发布说明模板（CI 拼装 Release 正文）
+├─ .devcontainer/                Codespaces 云端开发环境（.NET 9 SDK + DepotDownloader，见其 README）
 └─ AGENT.md                      维护者须知：已验证事实、设计约束、踩过的坑
 ```
 

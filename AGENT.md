@@ -3,11 +3,18 @@
 这份文件写给后续接手的人（或 AI）：记录**已验证的事实**、**为什么这样设计**、**踩过的坑**，
 避免重复试错。改代码或继续翻译前请先读完。
 
+文档索引见 [docs/README.md](docs/README.md)；目录规划与研发路径见
+[docs/maintainer/development.md](docs/maintainer/development.md)。
+
 ---
 
 ## 1. 已验证的事实（不要重复验证）
 
 ### 1.1 游戏与补丁对象
+
+> 下面这些 sha256 的**机器可读副本**是 `compat/known-versions.json`（本节是人读版，改数据只改 JSON）。
+> 清单里的 `steamBranch` 字段对应 Steam 分支：`public` / `previous_release`；
+> `scripts/tools/golden-sha256.py` 按平台+分支查金标准，脚本里不再硬编码哈希。
 
 Windows 版（`X-Plane.exe`，PE）——**当前最新验证：12.4.4-r2**：
 
@@ -90,7 +97,7 @@ X-Plane.exe 里引用了该文件名（NotoSansCJK-SC-Regular ×1、Resources/fo
   全部一样），只是文件名/类型不同。**可执行文件类型由魔数自动检测**（`Core/ImageFormat.cs`：
   MZ → PE，`\x7FELF` → ELF），与文件扩展名无关。
 - 直接在 Linux 文件系统上改 Steam 库里的文件，**不进 Wine prefix**。
-- Linux 没有 NTFS「低完整性标签」问题，但**必须保住可执行位**（见 §4.6）。
+- Linux 没有 NTFS「低完整性标签」问题，但**必须保住可执行位**（见 §4 第 6 条）。
 
 ### 1.4 教学文本为什么在可执行文件里
 
@@ -119,8 +126,7 @@ X-Plane.exe 里引用了该文件名（NotoSansCJK-SC-Regular ×1、Resources/fo
   （Linux 12.4.4，含兜底写入的位置），`Let's do a touch-n-go.` 31→22（Linux 字幕独立拷贝，
   译文同时从 24 字节改短为 21 字节「来个连续起降吧」）；
 - 自检会校验「每条中文 ≤ budget_bytes」，`--dry-run`/`--apply` 仍以实际二进制 safe_span 为准；
-- 好处：单文件维护、双平台显示一致；当前金标准 Windows 12.4.4 `ae57d619…`、
-  Windows 12.4.3 `deebc68e…`、Linux 原生 12.4.4 `257cdd95…`、Linux 原生 12.4.3 `b34e075c…`。
+- 好处：单文件维护、双平台显示一致；当前各版本的金标准哈希见 §1.1。
 
 ---
 
@@ -192,12 +198,14 @@ Windows 12.4.3 条目字段含义相同（`exeSize` 91,132,488、`regionStart/En
 
 ```
 src/
+├─ Program.cs            入口：无参 → GUI；带参 → CLI（Cli.CommandLine.TryRun 有返回码时直接退出）
 ├─ Core/                 平台无关，纯字节逻辑
 │  ├─ LessonImage.cs     锚点定位、区间、字符串枚举、safe_span、只读字符串解析（PE/ELF 通用）
 │  ├─ ImageFormat.cs     可执行文件类型检测（魔数：MZ→PE，\x7FELF→ELF）
 │  ├─ PatchEngine.cs     occurrences + patch_one + 句首垃圾前缀兜底 + 统计（返回改动区间）
 │  ├─ Verifier.cs        结构不变量 + 改动范围校验
 │  ├─ CompatManifest.cs  兼容清单模型 / 内置资源加载
+│  ├─ AppVersion.cs      版本号显示（优先 InformationalVersion，便于 CI 从 tag 注入）
 │  └─ Translations.cs    CSV 解析（单表 english,chinese,budget_bytes；标准 CSV 引号/转义）
 ├─ Platform/             平台差异全在这里（Core 里不允许出现 OperatingSystem 判断）
 │  ├─ GameLocator.cs     定位游戏：参数 → 环境变量 → 上次 → Steam VDF → 向上搜索
@@ -211,7 +219,7 @@ src/
 │  ├─ RunLog.cs          运行日志 log.txt（GUI 与 CLI 都写）
 │  └─ Elevation.cs       管理员/root 判断 + Windows 提权重启
 ├─ Service/PatchService.cs   Analyze / Apply / DryRun / Verify / Restore / ListBackups
-├─ Cli/                  CommandLine、Selftest、ConsoleBridge
+├─ Cli/                  CommandLine、Selftest、ConsoleBridge、TeeTextWriter（CLI 输出同时写 log.txt）
 └─ Gui/                  App、MainWindow、ConfirmWindow、UiFonts（Avalonia 11.3.x）
 tests/SmokeTests/        核心自检 + GUI headless 启动（CI 跑这个）
 ```
@@ -270,9 +278,10 @@ tests/SmokeTests/        核心自检 + GUI headless 启动（CI 跑这个）
    Linux 只给 `sudo` 文案，不自动提权。GUI 在提权前必须**先弹窗说明原因与后果**
    （`MainWindow.OfferElevationAsync`）；CLI 返回退出码 **4**。
    注意：提权后是新进程，原进程要 `Close()`；游戏目录要跟着传过去，否则用户还得重选。
-8. **`patch_one` 的 `stop` 必须在写入前算**：中文比英文长时，写入后再扫 0 会把区间算短，
-   导致结构校验误报「越界」。
-9. **译文表格式**：只认 `#` 注释与 `英文<TAB>中文`；译文里不能有制表符/换行。
+10. **`patch_one` 的 `stop` 必须在写入前算**：中文比英文长时，写入后再扫 0 会把区间算短，
+    导致结构校验误报「越界」。
+11. **译文表格式**：标准 CSV，三列 `english,chinese,budget_bytes`（首行是表头）；
+    行首 `#` 视为注释跳过。译文里不能有换行（制表符本身不特殊，但字段内含逗号/引号需按 CSV 规则转义）。
 
 ---
 
@@ -282,7 +291,7 @@ tests/SmokeTests/        核心自检 + GUI headless 启动（CI 跑这个）
    返回 null（字体检测报「无法解析 cmap」）。
 2. **单文件 + 原生库自解压不可用**：`IncludeNativeLibrariesForSelfExtract=true` 要求启动时把
    原生库解压到 `%TEMP%\.net`，受限系统/杀软环境下直接启动失败（错误码 5）。
-   → 改为 `IncludeNativeLibrariesForSelfExtract=false`，产出**便携目录**（exe + 4 个文件）再打 zip。
+   → 改为 `IncludeNativeLibrariesForSelfExtract=false`，产出**便携目录**（exe + 3 个原生库）再打 zip。
 3. **WinExe 没有控制台**：`--selftest` 等命令会「没有输出」。`ConsoleBridge` 用
    `AttachConsole(ATTACH_PARENT_PROCESS)` 接回父进程控制台，并设置 `Console.OutputEncoding = UTF8`。
 4. **PowerShell 的 `>` 重定向对 WinExe 无效**（输出丢失）。测试时用
@@ -329,12 +338,12 @@ tests/SmokeTests/        核心自检 + GUI headless 启动（CI 跑这个）
 
 ```powershell
 # Windows：构建 + 冒烟测试 + 打包 win-x64
-.\build.ps1
+.\scripts\build.ps1
 ```
 
 ```bash
 # Linux：构建 + 冒烟测试 + 打包 linux-x64
-./build.sh
+./scripts/build.sh
 ```
 
 > 本地脚本只产出当前平台的 x64 包；`win-arm64` / `linux-arm64` 由 CI 在 ARM64 runner 上原生构建。
@@ -355,8 +364,7 @@ tests/SmokeTests/        核心自检 + GUI headless 启动（CI 跑这个）
 # 4) 打补丁（必须得到金标准哈希）
 ... --apply --path "<副本目录>"
 (Get-FileHash "<副本目录>\X-Plane.exe" -Algorithm SHA256).Hash.ToLower()
-#   → 按 compat/known-versions.json 里对应版本的 patchedSha256 核对：
-#     12.4.4 Windows ae57d619… / Linux 原生 257cdd95…；12.4.3 Windows deebc68e… / Linux 原生 b34e075c…
+#   → 按 compat/known-versions.json 里对应版本的 patchedSha256 核对（金标准哈希见 §1.1）
 # 5) 校验 / 还原
 ... --verify --path "<副本目录>"
 ... --restore --path "<副本目录>"
@@ -370,6 +378,32 @@ tests/SmokeTests/        核心自检 + GUI headless 启动（CI 跑这个）
 - 未验证版本：改副本 1 个字节 → `--apply` 应拒绝（exit 1），`--apply --force` 才执行
 - 回归项「打开备份目录」：把 GUI 从临时目录启动 → 启动后删掉该目录 → 再点「打开备份目录」，
   应正常打开（旧实现会报 `Unable to find the specified file.`）
+
+---
+
+## 6.4 Codespaces 云端开发环境（`.devcontainer/`）
+
+仓库带了一套 GitHub Codespaces 配置（预装 .NET 9 SDK + DepotDownloader），
+可以在云端编译、跑测试，并取回 X-Plane 12 的**可执行文件**做端到端验证。
+
+**完整说明在 [`.devcontainer/README.md`](.devcontainer/README.md)** —— 镜像内容、脚本用法、
+最小包下载的预设表、Steam 认证步骤、能力边界、排障表。
+
+维护者只需记住这四条：
+
+1. **CI 仍然是发布的唯一权威**：Codespaces 只是 amd64 Linux 环境，跑不了 Windows / ARM64，
+   也测不了提权、NTFS ACL、PE 原子替换、Wine/Proton 路径。
+2. **只取可执行文件，不下完整游戏**：预设 depot `2014784`(linux) / `2014782`(windows)，
+   用 `-filelist` 只取 `X-Plane-x86_64` / `X-Plane.exe`（≈ 79 MB / 55 MB）；
+   公共 depot `2014781`（≈ 37 GB）**不提供**下载功能。
+3. **账号走 `account.config` 持久化登录态**（`scripts/steam-auth-*.sh`，说明见
+   [`docs/ops/steam-auth.md`](docs/ops/steam-auth.md)）：**本地人工登录一次**（`scripts/steam-auth-init.sh`，
+   唯一允许输密码/验证码的地方）→ 把 DepotDownloader 自己生成的认证文件部署到目标机
+   （`scripts/steam-auth-deploy.sh`，SSH/SCP 或加密 Secret）→ 目标机上**零交互**下载
+   （`scripts/steam-download.sh`，只用登录态）。认证失效即**报错停止**，不重试、不改密码、不绕 Steam Guard。
+   认证文件**绝不入库、绝不进公开 Artifact**。
+4. 一切验证脚本都**先复制副本再操作**，绝不改下载下来的原件；
+   打完的 sha256 仍要与 §1.1 的金标准逐字节一致才算数（§2.3 的新增版本流程同样适用）。
 
 ---
 
@@ -421,10 +455,8 @@ tests/SmokeTests/        核心自检 + GUI headless 启动（CI 跑这个）
     `ALet's get going…`、`Let's do a touch-n-go.`）。规则见 §4 第 4 条，从英文原文处写入、前缀字节不动。
   - **12.4.3 Linux 的 6 条 not-found**：Tesla 标题缺失、`Brakes off!`、`Flaps up!`、
     `Flaps up! 120 knots…`、`A touch-n-go…` 等前缀/覆盖情形、`ITT is a bit low…`（由 `That ITT…` 覆盖）。
-- **12.4.4 兼容已完成（Windows PE + Linux 原生版）**：Windows 金标准 `ae57d619…`
-  （513/8/0/0，786 段 / 45,095 字节）；Windows 12.4.3 金标准 `deebc68e…`（513/8/0/0，
-  785 段 / 45,095 字节）；Linux 原生 12.4.4 金标准 `257cdd95…`（504/7/0/9，776 段 / 44,820 字节）；
-  Linux 原生 12.4.3 金标准 `b34e075c…`（507/7/0/6，779 段 / 44,871 字节）。
+- **12.4.4 兼容已完成（Windows PE + Linux 原生版）**：12.4.4 与 12.4.3 的 Windows / Linux 原生版
+  共四条均已验证；各版本的金标准哈希、补丁统计与改动量见 §1.1。
   Linux 12.4.4 共救回 5 条、12.4.3 共 4 条句首带垃圾数据的字幕（含每节课第一句与
   `Let's do a touch-n-go.`）；后者只有 22 字节可用，译文随之收紧到 21 字节，Windows 两个版本的
   金标准也随译文变化重新验证（用原版 exe 副本实测）。12.4.4 Linux 缺 4 个课程标题串（见上条），需实机确认
@@ -469,7 +501,7 @@ git push origin v0.1.0
    每个 job：冒烟测试（核心自检 + GUI headless）→ 发布便携版 → 校验发布产物能启动（`--selftest`）→ 上传 artifact。
 2. `release` job 等四个 job 都成功后，下载全部 artifact、合并成一份 `SHA256SUMS.txt`，创建 Release 并挂上
    4 个包（Windows 为 zip、Linux 为 tar.gz）与 `SHA256SUMS.txt`。Release 说明正文 =
-   [`docs/release-notes.md`](docs/release-notes.md)（静态部分）+ `.github/render-compat-versions.py`
+   [`docs/release/release-notes.md`](docs/release/release-notes.md)（静态部分）+ `scripts/tools/render-compat-versions.py`
    读 `compat/known-versions.json` 生成的**兼容版本表**（版本、平台、原版/补丁后 sha256 前 12 位、
    验证日期），所以**新增兼容版本不需要手改 Release 说明**，改清单即可。
 3. tag 名里带 `-` 的（如 `v0.1.0-snapshot`）**自动标记为预发布**，不会顶掉“Latest release”。
@@ -485,12 +517,15 @@ git push origin v0.1.0
 
 注意：
 
-- **版本号来源**：`src/XpLessonZhCN.csproj` 的 `<Version>` 是本地默认值；CI 用 tag 覆盖
-  （`-p:Version=${tag#v}`），所以 `--version` 显示的一定是 tag 版本。改版本只需改 tag 或同步改 csproj。
+- **版本号来源**：`src/XpLessonZhCN.csproj` 的 `<Version>`（当前 `0.1.0`）是本地默认值。CI 从 tag 取版本号
+  （去掉前缀 `v`），做正则校验后用 `-p:Version=…` 覆盖：完全不符合 `x.y.z` 形式的 tag 会退化成占位版本
+  `0.0.0-ci`；带后缀的预发布 tag（如 `v0.1.0-snapshot`）按当前正则仍按 tag 原样传下去。
+  所以 `--version` 只有在 tag 构建时才等于 tag 版本；本地 `scripts/build.sh` / `scripts/build.ps1`
+  **不传版本号**，产物版本恒为 csproj 里的 `<Version>`。改版本只需改 tag 或同步改 csproj。
 - **仓库设置**：Settings → Actions → General → Workflow permissions 需要允许
   **Read and write**，否则 `release` job 拿不到写权限（403）。workflow 里已声明 `contents: write`。
 - 只在打 tag 时发布；推 main、PR、手动触发都只构建不发布。
-- 本地预览发布产物：`./build.ps1`（Windows）、`./build.sh`（Linux），产物在 `dist/`，不会上传。
+- 本地预览发布产物：`./scripts/build.ps1`（Windows）、`./scripts/build.sh`（Linux），产物在 `dist/`，不会上传。
 
 ---
 

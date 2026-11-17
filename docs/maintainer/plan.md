@@ -3,6 +3,14 @@
 > 状态：**已实施**（v0.1.0，2026-11-15）。本文件保留为设计决策记录；实施偏差见 §16。
 > 目标：**一个代码库、Windows 与 Linux(Wine/Proton) 双平台**的图形化补丁工具，用户零安装、解压即用。
 
+> ⚠️ **历史设计记录：文件树与 CLI 已与实现脱节。**
+> §4 列出的 `IBinaryImage.cs` / `PeImage.cs` / `PatchReport.cs` / `IExeWriter.cs` /
+> `Gui/ViewModels/` / `Gui/Assets/` / `Cli/Commands.cs` / `tests/fixtures/sample.bin`
+> **在实现里并不存在**；§9 的 `--report` 参数也**没有实现**。
+> **请以 [AGENT.md §3](../../AGENT.md)（代码结构）与
+> [compat/known-versions.json](../../compat/known-versions.json)（已验证版本）为准**，
+> 本文只用来追溯设计由来，不要照着它改代码。
+
 ---
 
 ## 1. 目标与非目标
@@ -52,7 +60,7 @@
 > Windows `X-Plane.exe` 55,022,152 字节、金标准 `ae57d619…`；Windows 12.4.3 `deebc68e…`；
 > Linux `X-Plane-x86_64` 78,659,600 字节、金标准 `257cdd95…`；Linux 12.4.3 `b34e075c…`。
 > 句首带垃圾数据的字幕由引擎兜底写入（含第一句与 `Let's do a touch-n-go.`），9 条 not-found
-> 属平台差异；12.4.3 条目仍保留。最新实测数据以 [AGENT.md §1.1](AGENT.md) 与
+> 属平台差异；12.4.3 条目仍保留。最新实测数据以 [AGENT.md §1.1](../../AGENT.md) 与
 > `compat/known-versions.json` 为准。
 
 ### 2.2 Wine / Proton 场景
@@ -85,7 +93,9 @@ X-Plane.exe 内部字符串引用：NotoSansCJK-SC-Regular ×1、Resources/fonts
 4. 只认「字符串起点」：匹配位置前一字节必须是 `0x00`。
 5. 前缀匹配必须跳过（如 `Flaps up!` 是 `Flaps up! 120 knots! 150 degree heading!` 的前缀）。
 6. Windows 替换 exe 必须「写父目录再 rename」（绕开低完整性标签）。
-7. 译文表只认 `#` 注释与 `英文<TAB>中文`；译文内不能有制表符/换行。
+7. ~~译文表只认 `#` 注释与 `英文<TAB>中文`；译文内不能有制表符/换行。~~
+   **已废弃**：译文表已改为**标准 CSV 三列** `english,chinese,budget_bytes`（首行表头，行首 `#` 为注释），
+   见 AGENT.md §1.4。
 
 ---
 
@@ -299,6 +309,10 @@ Windows：`Process.GetProcessesByName("X-Plane")`。Linux：扫描 `/proc/*/comm
 
 ## 9. CLI 规格（无界面模式，CI 与 headless Linux 用）
 
+> ⚠️ **本节是设计稿，参数名与实现已有出入**：实现里游戏目录一律用 `--path <dir>` 传入
+> （不是位置参数 `<dir>`），且 `--yes` 未实现（未验证版本用 `--force`）。
+> 以 [AGENT.md §6](../../AGENT.md) 的实际用法为准。
+
 ```
 xpzhcn                          # 无参数 → 打开 GUI
 xpzhcn --selftest               # 合成数据自检（不读游戏文件）
@@ -309,9 +323,12 @@ xpzhcn --verify     <dir>
 xpzhcn --restore    <dir> [--backup <name>]
 xpzhcn --list-backups <dir>
 xpzhcn --font-check <dir>       # §7 字体检测
-xpzhcn --report     <dir>       # 导出 patch_report.tsv
+xpzhcn --report     <dir>       # 【已废弃，未实现】导出 patch_report.tsv
 xpzhcn --version
 ```
+
+> `--report` **没有实现**：逐条补丁结果由程序自动写到 `<程序目录>/.zh_cn_translate/data/patch_report.tsv`，
+> 不需要命令行参数（见 AGENT.md §3.1）。
 
 | 退出码 | 含义 |
 |---|---|
