@@ -19,3 +19,16 @@ __pycache__/
 
 # 本地调研/生成工具（不入库）
 .tools/
+
+# Codespaces 下载的游戏文件与副本（体积大、可重新下载，不进仓库）
+steamapps/
+steam/
+.steam/
+xplane12-copy/
+
+# Steam 认证凭据（等价于一次 Steam 会话，绝不入库；流程见 docs/ops/steam-auth.md）
+# account.config 无斜杠 → 任意层级同名文件都忽略（不再单列 .devcontainer/account.config）
+# *.b64 覆盖 scripts/steam-auth-deploy.sh --secrets pack --out <任意名>.b64 生成的密文本
+account.config
+account.config.username
+*.b64
